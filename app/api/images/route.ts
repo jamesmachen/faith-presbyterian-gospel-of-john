@@ -1,5 +1,5 @@
-import { env } from "cloudflare:workers";
 import { getSiteRole, normalizeEmail } from "@/db/access";
+import { getStorage } from "@/lib/blob-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +23,7 @@ type UploadSession = {
 };
 
 function getBucket() {
-  const bucket = (env as unknown as { DOCUMENTS?: R2Bucket }).DOCUMENTS;
-  if (!bucket) throw new Error("Image storage is not configured.");
-  return bucket;
+  return getStorage();
 }
 
 function safeFilename(filename: string) {
