@@ -1,98 +1,53 @@
-# vinext-starter
+# Faith Presbyterian Church — Gospel of John
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Native Next.js application for Faith Presbyterian Church Sunday School
+resources, study schedules, documents, images, Bible translations, and site
+administration.
 
-## Prerequisites
+## Local development
 
-- Node.js `>=22.13.0`
-
-## Quick Start
+Requires Node.js 22.13 or newer.
 
 ```bash
 npm install
 npm run dev
+```
+
+Production validation:
+
+```bash
 npm run build
+npm start
 ```
 
-This starter does not use `wrangler.jsonc`.
+## Vercel configuration
 
-## Included Shape
+Import this GitHub repository into Vercel as a Next.js project. No framework
+adapter or custom build command is required.
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+The application uses these server-side environment variables:
 
-## Workspace Auth Headers
+- `DATABASE_URL` — a pooled Postgres connection string from a Vercel
+  Marketplace Postgres provider such as Neon or Supabase.
+- `BLOB_READ_WRITE_TOKEN` — created when a Vercel Blob store is connected to
+  the project.
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
+The application creates its Postgres tables and initial records on first use.
+Existing Cloudflare D1 data and R2 objects are not automatically transferred;
+export and import those records and files before switching production traffic.
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+## Authentication
 
-Treat the full name as optional and fall back to email when it is absent:
+The current administrator flow trusts the request headers
+`oai-authenticated-user-email`, `oai-authenticated-user-full-name`, and
+`oai-authenticated-user-full-name-encoding`. Those headers were supplied by the
+previous Sites authentication gateway. Vercel does not provide them.
 
-```tsx
-import { headers } from "next/headers";
+Before enabling administration on Vercel, connect an identity provider (for
+example Auth.js, Clerk, or another trusted authentication layer) and update the
+server-side identity lookup to use that provider. Never accept these identity
+headers directly from untrusted public requests.
 
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+The public site remains readable, but the database and Blob environment
+variables are required for schedules, Bible translations, uploaded resources,
+and administrator data.

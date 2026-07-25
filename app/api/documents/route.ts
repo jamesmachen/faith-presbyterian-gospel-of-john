@@ -1,5 +1,5 @@
-import { env } from "cloudflare:workers";
 import { getSiteRole, normalizeEmail, SiteRole } from "@/db/access";
+import { getStorage } from "@/lib/blob-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -8,9 +8,7 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "txt", "md", "rtf", "ppt", "pptx", "xls", "xlsx"]);
 
 function getBucket() {
-  const bucket = (env as unknown as { DOCUMENTS?: R2Bucket }).DOCUMENTS;
-  if (!bucket) throw new Error("Document storage is not configured.");
-  return bucket;
+  return getStorage();
 }
 
 function safeFilename(filename: string) {

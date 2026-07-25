@@ -1,6 +1,6 @@
-import { env } from "cloudflare:workers";
 import { getSiteRole, normalizeEmail } from "@/db/access";
 import { getBibleTranslation, listBibleTranslations, removeBibleTranslation, saveBibleTranslation, updateBibleTranslation } from "@/db/translations";
+import { getStorage } from "@/lib/blob-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +22,7 @@ type IconUploadSession = {
 };
 
 function bucket() {
-  const storage = (env as unknown as { DOCUMENTS?: R2Bucket }).DOCUMENTS;
-  if (!storage) throw new Error("Icon storage is unavailable.");
-  return storage;
+  return getStorage();
 }
 
 function iconSessionKey(id: string) {
