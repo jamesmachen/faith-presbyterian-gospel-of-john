@@ -4,6 +4,8 @@ import TranslationStore from "./translation-store";
 import { chatGPTSignInPath, chatGPTSignOutPath, getChatGPTUser } from "./chatgpt-auth";
 import { getSiteRole } from "@/db/access";
 import { listStudyPassages } from "@/db/site-config";
+import { withBasePath } from "@/lib/base-path";
+import { DEFAULT_STUDY_PASSAGES } from "./site-config";
 
 export const dynamic = "force-dynamic";
 
@@ -19,12 +21,12 @@ export default async function Home() {
   const user = await getChatGPTUser();
   const role = user ? await getSiteRole(user.email) : null;
   const isAdmin = role === "admin";
-  const schedule = await listStudyPassages();
+  const schedule = await listStudyPassages().catch(() => DEFAULT_STUDY_PASSAGES);
   return (
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="Faith Presbyterian Church Sunday School home">
-          <img className="brand-logo" src="/fpc-logo.png" alt="Faith Presbyterian Church" />
+          <img className="brand-logo" src={withBasePath("/fpc-logo.png")} alt="Faith Presbyterian Church" />
           <small>Sunday School</small>
         </a>
         <div className="header-tools">
@@ -32,7 +34,7 @@ export default async function Home() {
             <a href="#resources">Resources</a>
             <a href="#schedule">Schedule</a>
             <a href="#study">Study Guide</a>
-            {isAdmin && <a href="/admin">ADMIN</a>}
+            {isAdmin && <a href={withBasePath("/admin")}>ADMIN</a>}
           </nav>
           <div className="account-menu">
             {isAdmin ? <><span>Administrator</span><a href={chatGPTSignOutPath("/")}>Sign out</a></> : user ? <><span>Not an admin</span><a href={chatGPTSignOutPath("/")}>Sign out</a></> : <a href={chatGPTSignInPath("/admin")}>Admin sign in</a>}

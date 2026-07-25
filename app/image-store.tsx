@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type StoredImage = { key: string; name: string; size: number; uploaded: string };
 type ApiResult = { error?: string; sessionId?: string; chunkSize?: number; totalChunks?: number };
@@ -34,7 +35,7 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
 
   const loadImages = useCallback(async () => {
     try {
-      const response = await fetch("/api/images", { cache: "no-store" });
+      const response = await fetch(withBasePath("/api/images"), { cache: "no-store" });
       if (!response.ok) throw new Error("Could not load uploaded images.");
       const data = (await response.json()) as { images: StoredImage[] };
       setImages(data.images);
@@ -58,7 +59,7 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
     setIsUploading(true);
     setStatus(`Preparing ${selectedFile.name}…`);
     try {
-      const startResponse = await fetch("/api/images?action=start", {
+      const startResponse = await fetch(withBasePath("/api/images?action=start"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: selectedFile.name, size: selectedFile.size, type: selectedFile.type }),
@@ -69,13 +70,13 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
       for (let index = 0; index < start.totalChunks; index += 1) {
         const beginning = index * start.chunkSize;
         const piece = selectedFile.slice(beginning, Math.min(beginning + start.chunkSize, selectedFile.size));
-        const chunkResponse = await fetch(`/api/images?action=chunk&sessionId=${encodeURIComponent(start.sessionId)}&index=${index}`, { method: "POST", body: piece });
+        const chunkResponse = await fetch(withBasePath(`/api/images?action=chunk&sessionId=${encodeURIComponent(start.sessionId)}&index=${index}`), { method: "POST", body: piece });
         const chunkResult = await readApiResult(chunkResponse);
         if (!chunkResponse.ok) throw new Error(chunkResult.error || "Part of the image could not be uploaded.");
         setStatus(`Uploading ${selectedFile.name}… ${Math.round(((index + 1) / start.totalChunks) * 100)}%`);
       }
 
-      const completeResponse = await fetch(`/api/images?action=complete&sessionId=${encodeURIComponent(start.sessionId)}`, { method: "POST" });
+      const completeResponse = await fetch(withBasePath(`/api/images?action=complete&sessionId=${encodeURIComponent(start.sessionId)}`), { method: "POST" });
       const completeResult = await readApiResult(completeResponse);
       if (!completeResponse.ok) throw new Error(completeResult.error || "The image could not be finalized.");
       setSelectedFile(null);
@@ -93,7 +94,7 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
     if (!window.confirm(`Delete ${image.name}? This cannot be undone.`)) return;
     setStatus(`Deleting ${image.name}…`);
     try {
-      const response = await fetch(`/api/images?key=${encodeURIComponent(image.key)}`, { method: "DELETE" });
+      const response = await fetch(withBasePath(`/api/images?key=${encodeURIComponent(image.key)}`), { method: "DELETE" });
       const result = await readApiResult(response);
       if (!response.ok) throw new Error(result.error || "Delete failed.");
       setStatus("Image deleted.");
@@ -106,10 +107,10 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="image-store">
       <ul className="download-list">
-        <li><a href="/resources/gospel-of-john-class-cover.png" download><span>Gospel of John Class Cover</span><small>PNG image · landscape</small></a></li>
+        <li><a href={withBasePath("/resources/gospel-of-john-class-cover.png")} download><span>Gospel of John Class Cover</span><small>PNG image · landscape</small></a></li>
         {images.map((image) => (
           <li key={image.key} className="uploaded-document">
-            <a href={`/api/images?key=${encodeURIComponent(image.key)}`} download={image.name}><span>{image.name}</span><small>Uploaded image · {formatSize(image.size)}</small></a>
+            <a href={withBasePath(`/api/images?key=${encodeURIComponent(image.key)}`)} download={image.name}><span>{image.name}</span><small>Uploaded image · {formatSize(image.size)}</small></a>
             {isAdmin && <button type="button" className="document-delete" onClick={() => void deleteImage(image)} aria-label={`Delete ${image.name}`}>Delete</button>}
           </li>
         ))}

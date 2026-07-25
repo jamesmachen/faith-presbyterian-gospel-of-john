@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,14 +13,16 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase,
     title: "Faith-Presbyterian-Gospel-of-John",
     description: "Study resources, weekly passages, reflection questions, and a class outline for exploring the Gospel of John.",
-    icons: { icon: "/icon.png" },
+    alternates: { canonical: withBasePath("/") },
+    icons: { icon: withBasePath("/icon.png") },
     openGraph: {
       title: "The Gospel of John — Come and See",
       description: "Resources for a Faith Presbyterian Church Sunday School study of the Gospel of John.",
       type: "website",
-      images: [{ url: "/og.png", width: 1536, height: 1024, alt: "Faith Presbyterian Church — The Gospel of John — Come and See" }],
+      url: withBasePath("/"),
+      images: [{ url: withBasePath("/og.png"), width: 1536, height: 1024, alt: "Faith Presbyterian Church — The Gospel of John — Come and See" }],
     },
-    twitter: { card: "summary_large_image", title: "The Gospel of John — Come and See", description: "Faith Presbyterian Church Sunday School resources", images: ["/og.png"] },
+    twitter: { card: "summary_large_image", title: "The Gospel of John — Come and See", description: "Faith Presbyterian Church Sunday School resources", images: [withBasePath("/og.png")] },
   };
 }
 

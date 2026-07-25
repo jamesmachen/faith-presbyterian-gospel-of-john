@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { StudyPassageConfig } from "./site-config";
+import { withBasePath } from "@/lib/base-path";
 
 type ManagedUser = { email: string; role: "admin"; createdAt: string; createdBy: string };
 type ManagedTranslation = { id: string; name: string; abbreviation: string; url: string; iconKey: string | null };
@@ -20,7 +21,7 @@ async function readTranslationResult(response: Response): Promise<TranslationApi
 
 async function uploadTranslationIcon(icon: File, onProgress: (message: string) => void) {
   onProgress(`Preparing ${icon.name}…`);
-  const startResponse = await fetch("/api/translations?action=icon-start", {
+  const startResponse = await fetch(withBasePath("/api/translations?action=icon-start"), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ size: icon.size, type: icon.type }),
@@ -31,13 +32,13 @@ async function uploadTranslationIcon(icon: File, onProgress: (message: string) =
   for (let index = 0; index < start.totalChunks; index += 1) {
     const beginning = index * start.chunkSize;
     const piece = icon.slice(beginning, Math.min(beginning + start.chunkSize, icon.size));
-    const chunkResponse = await fetch(`/api/translations?action=icon-chunk&sessionId=${encodeURIComponent(start.sessionId)}&index=${index}`, { method: "POST", body: piece });
+    const chunkResponse = await fetch(withBasePath(`/api/translations?action=icon-chunk&sessionId=${encodeURIComponent(start.sessionId)}&index=${index}`), { method: "POST", body: piece });
     const chunkResult = await readTranslationResult(chunkResponse);
     if (!chunkResponse.ok) throw new Error(chunkResult.error || "Part of the icon could not be uploaded.");
     onProgress(`Uploading ${icon.name}… ${Math.round(((index + 1) / start.totalChunks) * 100)}%`);
   }
 
-  const completeResponse = await fetch(`/api/translations?action=icon-complete&sessionId=${encodeURIComponent(start.sessionId)}`, { method: "POST" });
+  const completeResponse = await fetch(withBasePath(`/api/translations?action=icon-complete&sessionId=${encodeURIComponent(start.sessionId)}`), { method: "POST" });
   const complete = await readTranslationResult(completeResponse);
   if (!completeResponse.ok || !complete.iconKey) throw new Error(complete.error || "The icon could not be finalized.");
   return complete.iconKey;
@@ -55,21 +56,21 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
   const [busy, setBusy] = useState(false);
 
   const loadUsers = useCallback(async () => {
-    const response = await fetch("/api/users", { cache: "no-store" });
+    const response = await fetch(withBasePath("/api/users"), { cache: "no-store" });
     const result = (await response.json()) as { users?: ManagedUser[]; error?: string };
     if (!response.ok) throw new Error(result.error || "Could not load users.");
     setUsers(result.users ?? []);
   }, []);
 
   const loadTranslations = useCallback(async () => {
-    const response = await fetch("/api/translations", { cache: "no-store" });
+    const response = await fetch(withBasePath("/api/translations"), { cache: "no-store" });
     const result = (await response.json()) as { translations?: ManagedTranslation[]; error?: string };
     if (!response.ok) throw new Error(result.error || "Could not load Bible resources.");
     setTranslations(result.translations ?? []);
   }, []);
 
   const loadPassages = useCallback(async () => {
-    const response = await fetch("/api/site-config", { cache: "no-store" });
+    const response = await fetch(withBasePath("/api/site-config"), { cache: "no-store" });
     const result = (await response.json()) as { passages?: StudyPassageConfig[]; error?: string };
     if (!response.ok) throw new Error(result.error || "Could not load the study schedule.");
     setPassages(result.passages ?? []);
@@ -90,7 +91,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
     setBusy(true);
     setScheduleStatus("Saving passage tiles…");
     try {
-      const response = await fetch("/api/site-config", {
+      const response = await fetch(withBasePath("/api/site-config"), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ passages }),
@@ -116,7 +117,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
       const icon = formData.get("icon");
       const iconKey = icon instanceof File && icon.size ? await uploadTranslationIcon(icon, setTranslationStatus) : null;
       setTranslationStatus("Saving Bible resource…");
-      const response = await fetch("/api/translations?action=create", {
+      const response = await fetch(withBasePath("/api/translations?action=create"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: formData.get("name"), abbreviation: formData.get("abbreviation"), url: formData.get("url"), iconKey }),
@@ -143,7 +144,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
       const icon = formData.get("icon");
       const iconKey = icon instanceof File && icon.size ? await uploadTranslationIcon(icon, setTranslationStatus) : null;
       setTranslationStatus("Saving Bible resource changes…");
-      const response = await fetch("/api/translations", {
+      const response = await fetch(withBasePath("/api/translations"), {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -173,7 +174,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
     setBusy(true);
     setTranslationStatus("");
     try {
-      const response = await fetch(`/api/translations?id=${encodeURIComponent(translation.id)}`, { method: "DELETE" });
+      const response = await fetch(withBasePath(`/api/translations?id=${encodeURIComponent(translation.id)}`), { method: "DELETE" });
       const result = await readTranslationResult(response);
       if (!response.ok) throw new Error(result.error || "Could not remove this Bible resource.");
       if (editingTranslationId === translation.id) setEditingTranslationId(null);
@@ -192,7 +193,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
     setBusy(true);
     setStatus("");
     try {
-      const response = await fetch("/api/users", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+      const response = await fetch(withBasePath("/api/users"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Could not save this user.");
       setEmail("");
@@ -209,7 +210,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
     if (!window.confirm(`Remove access for ${userEmail}?`)) return;
     setBusy(true);
     try {
-      const response = await fetch(`/api/users?email=${encodeURIComponent(userEmail)}`, { method: "DELETE" });
+      const response = await fetch(withBasePath(`/api/users?email=${encodeURIComponent(userEmail)}`), { method: "DELETE" });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Could not remove this user.");
       setStatus("User removed.");
@@ -268,7 +269,7 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
               <div className="translation-admin-item" key={translation.id}>
                 <div className="translation-admin-row">
                   <span className={`translation-admin-mark${translation.iconKey ? " has-image" : ""}`}>
-                    {translation.iconKey ? <img src={`/api/translations?iconKey=${encodeURIComponent(translation.iconKey)}`} alt="" /> : translation.abbreviation}
+                    {translation.iconKey ? <img src={withBasePath(`/api/translations?iconKey=${encodeURIComponent(translation.iconKey)}`)} alt="" /> : translation.abbreviation}
                   </span>
                   <span><strong>{translation.abbreviation} · {translation.name}</strong><a href={translation.url} target="_blank" rel="noopener noreferrer">View link ↗</a></span>
                   <span className="translation-admin-actions">

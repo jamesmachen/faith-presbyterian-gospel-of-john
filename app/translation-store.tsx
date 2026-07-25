@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type BibleTranslation = {
   id: string;
@@ -16,7 +17,7 @@ export default function TranslationStore() {
 
   const loadTranslations = useCallback(async () => {
     try {
-      const response = await fetch("/api/translations", { cache: "no-store" });
+      const response = await fetch(withBasePath("/api/translations"), { cache: "no-store" });
       const result = (await response.json()) as { translations?: BibleTranslation[]; error?: string };
       if (!response.ok) throw new Error(result.error || "Could not load translations.");
       setTranslations(result.translations ?? []);
@@ -36,7 +37,7 @@ export default function TranslationStore() {
   return (
     <details className="resource-card translation-card" open>
       <summary>
-        <span className="resource-icon bible-icon" aria-hidden="true"><img src="/bible-generic-icon.png" alt="" /></span>
+        <span className="resource-icon bible-icon" aria-hidden="true"><img src={withBasePath("/bible-generic-icon.png")} alt="" /></span>
         <span><strong>Bible Resources</strong><small>Read John in multiple versions</small></span>
         <b aria-hidden="true">+</b>
       </summary>
@@ -45,7 +46,7 @@ export default function TranslationStore() {
         {translations.map((translation) => (
           <a key={translation.id} className="translation-link" href={translation.url} target="_blank" rel="noopener noreferrer" aria-label={`Read John in the ${translation.name} (opens in a new tab)`}>
             <span className={`translation-mark${translation.iconKey ? " has-image" : ""}`} aria-hidden="true">
-              {translation.iconKey ? <img src={`/api/translations?iconKey=${encodeURIComponent(translation.iconKey)}`} alt="" /> : translation.abbreviation}
+              {translation.iconKey ? <img src={withBasePath(`/api/translations?iconKey=${encodeURIComponent(translation.iconKey)}`)} alt="" /> : translation.abbreviation}
             </span>
             <span className="translation-copy"><strong>{translation.abbreviation}</strong><small>{translation.name}</small></span>
             <span className="translation-arrow" aria-hidden="true">↗</span>

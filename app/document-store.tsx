@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type StoredDocument = {
   key: string;
@@ -27,7 +28,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
 
   const loadDocuments = useCallback(async () => {
     try {
-      const response = await fetch("/api/documents", { cache: "no-store" });
+      const response = await fetch(withBasePath("/api/documents"), { cache: "no-store" });
       if (!response.ok) throw new Error("Could not load uploaded documents.");
       const data = (await response.json()) as { documents: StoredDocument[] };
       setDocuments(data.documents);
@@ -63,7 +64,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
     formData.set("file", selectedFile);
 
     try {
-      const response = await fetch("/api/documents", { method: "POST", body: formData });
+      const response = await fetch(withBasePath("/api/documents"), { method: "POST", body: formData });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Upload failed.");
       setSelectedFile(null);
@@ -81,7 +82,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
     if (!window.confirm(`Delete ${document.name}? This cannot be undone.`)) return;
     setStatus(`Deleting ${document.name}…`);
     try {
-      const response = await fetch(`/api/documents?key=${encodeURIComponent(document.key)}`, { method: "DELETE" });
+      const response = await fetch(withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`), { method: "DELETE" });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Delete failed.");
       setStatus("Document deleted.");
@@ -94,11 +95,11 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="document-store">
       <ul className="download-list">
-        <li><a href="/resources/gospel-of-john-study-guide.md" download><span>Gospel of John Study Guide</span><small>Markdown document · 4 KB</small></a></li>
-        <li><a href="/resources/class-schedule.md" download><span>Weeks 10–21 Schedule</span><small>Markdown document · 2 KB</small></a></li>
+        <li><a href={withBasePath("/resources/gospel-of-john-study-guide.md")} download><span>Gospel of John Study Guide</span><small>Markdown document · 4 KB</small></a></li>
+        <li><a href={withBasePath("/resources/class-schedule.md")} download><span>Weeks 10–21 Schedule</span><small>Markdown document · 2 KB</small></a></li>
         {documents.map((document) => (
           <li key={document.key} className="uploaded-document">
-            <a href={`/api/documents?key=${encodeURIComponent(document.key)}`} download={document.name}>
+            <a href={withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`)} download={document.name}>
               <span>{document.name}</span>
               <small>Uploaded document · {formatSize(document.size)}</small>
             </a>

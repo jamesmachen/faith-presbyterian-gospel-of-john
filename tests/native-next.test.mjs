@@ -29,3 +29,17 @@ test("uses native Next.js scripts without Cloudflare build tooling", async () =>
 test("creates native Next.js output", async () => {
   await access(new URL(".next/BUILD_ID", root));
 });
+
+test("configures the canonical base path and unprefixed legacy redirect", async () => {
+  const [nextConfig, basePathHelper] = await Promise.all([
+    readFile(new URL("next.config.ts", root), "utf8"),
+    readFile(new URL("lib/base-path.ts", root), "utf8"),
+  ]);
+
+  assert.match(nextConfig, /basePath:\s*["']\/sunday-school["']/);
+  assert.match(nextConfig, /source:\s*["']\/sundayschool["']/);
+  assert.match(nextConfig, /destination:\s*["']\/sunday-school["']/);
+  assert.match(nextConfig, /permanent:\s*true/);
+  assert.match(nextConfig, /basePath:\s*false/);
+  assert.match(basePathHelper, /BASE_PATH\s*=\s*["']\/sunday-school["']/);
+});

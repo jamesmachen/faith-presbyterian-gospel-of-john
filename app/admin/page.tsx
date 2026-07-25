@@ -3,6 +3,7 @@ import DocumentStore from "../document-store";
 import ImageStore from "../image-store";
 import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
 import { getSiteRole } from "@/db/access";
+import { withBasePath } from "@/lib/base-path";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +15,11 @@ export default async function AdminPage() {
     return (
       <main className="access-page">
         <section className="access-card">
-          <img src="/fpc-logo.png" alt="Faith Presbyterian Church" />
+          <img src={withBasePath("/fpc-logo.png")} alt="Faith Presbyterian Church" />
           <p className="eyebrow">Administrator access</p>
           <h1>This account is not an administrator.</h1>
           <p>You are signed in as <strong>{user.email}</strong>.</p>
-          <a className="button button-primary" href="/">Return to the class site</a>
+          <a className="button button-primary" href={withBasePath("/")}>Return to the class site</a>
         </section>
       </main>
     );
@@ -27,12 +28,12 @@ export default async function AdminPage() {
   return (
     <main className="admin-page">
       <header className="site-header">
-        <a className="brand" href="/" aria-label="Faith Presbyterian Church Sunday School home">
-          <img className="brand-logo" src="/fpc-logo.png" alt="Faith Presbyterian Church" />
+        <a className="brand" href={withBasePath("/")} aria-label="Faith Presbyterian Church Sunday School home">
+          <img className="brand-logo" src={withBasePath("/fpc-logo.png")} alt="Faith Presbyterian Church" />
           <small>Sunday School</small>
         </a>
         <div className="header-tools">
-          <nav aria-label="Administrator navigation"><a href="/">Class site</a><a href="#passages">Passages</a><a href="#resources">Files</a></nav>
+          <nav aria-label="Administrator navigation"><a href={withBasePath("/")}>Class site</a><a href="#passages">Passages</a><a href="#resources">Files</a></nav>
           <div className="account-menu"><span>Administrator</span><a href={chatGPTSignOutPath("/")}>Sign out</a></div>
         </div>
       </header>
@@ -67,7 +68,7 @@ export default async function AdminPage() {
 
       <footer>
         <div><strong>Faith Presbyterian Church</strong><span>Sunday School · Administration</span></div>
-        <a href="/">Return to class site →</a>
+        <a href={withBasePath("/")}>Return to class site →</a>
       </footer>
     </main>
   );
