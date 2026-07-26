@@ -34,7 +34,7 @@ nav a:hover { border-color: var(--terra); }
 .header-tools { display: flex; align-items: center; gap: 22px; }
 .account-menu { padding-left: 18px; display: flex; align-items: center; gap: 10px; border-left: 1px solid var(--line); font-size: .7rem; }
 .account-menu span { color: var(--sage); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
-.account-menu a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.account-menu a, .account-menu button { padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 .hero { width: min(1280px, calc(100% - 48px)); min-height: 670px; margin: 0 auto; padding: 105px 0 80px; display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(370px, .75fr); align-items: center; gap: 70px; }
 .hero h1 { margin-bottom: 25px; color: var(--sage); font-size: clamp(3.2rem, 5.3vw, 5.2rem); line-height: .94; white-space: nowrap; }
@@ -160,7 +160,7 @@ nav a:hover { border-color: var(--terra); }
 .remove-icon-option span { margin: 0 !important; color: var(--muted) !important; font-size: .78rem !important; letter-spacing: 0 !important; text-transform: none !important; }
 .edit-form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 9px; }
 .add-user-form { padding: 22px; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(210px, .45fr) auto; align-items: end; gap: 16px; border: 1px solid var(--line); border-radius: 10px; background: white; }
-.add-user-form.admin-only { grid-template-columns: minmax(260px, 1fr) auto; }
+.add-user-form.admin-only { grid-template-columns: minmax(230px, 1fr) minmax(210px, .7fr) auto; }
 .add-user-form label span { margin-bottom: 6px; display: block; color: var(--sage); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .add-user-form input, .add-user-form select, .user-table select { width: 100%; min-height: 46px; padding: 9px 12px; border: 1px solid #a9cce4; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
 .add-user-form input:focus, .add-user-form select:focus, .user-table select:focus { outline: 3px solid #76c6f3; outline-offset: 2px; }

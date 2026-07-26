@@ -1,30 +1,22 @@
 import type { StudyPassageConfig } from "@/app/site-config";
-import { getSiteRole, normalizeEmail } from "@/db/access";
 import { listStudyPassages, saveStudyPassages } from "@/db/site-config";
+import { requireAdminApi } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-
-async function requireAdmin(request: Request) {
-  const email = request.headers.get("oai-authenticated-user-email");
-  if (!email) return Response.json({ error: "Please sign in as an administrator." }, { status: 401 });
-  const normalized = normalizeEmail(email);
-  if (await getSiteRole(normalized) !== "admin") return Response.json({ error: "Administrator access is required." }, { status: 403 });
-  return null;
-}
 
 function cleanLabel(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-export async function GET(request: Request) {
-  const error = await requireAdmin(request);
-  if (error) return error;
+export async function GET() {
+  const auth = await requireAdminApi();
+  if (auth.error) return auth.error;
   return Response.json({ passages: await listStudyPassages() });
 }
 
 export async function PUT(request: Request) {
-  const error = await requireAdmin(request);
-  if (error) return error;
+  const auth = await requireAdminApi();
+  if (auth.error) return auth.error;
   const body = (await request.json()) as { passages?: Partial<StudyPassageConfig>[] };
   if (!Array.isArray(body.passages) || body.passages.length === 0 || body.passages.length > 40) {
     return Response.json({ error: "The study schedule is invalid." }, { status: 400 });

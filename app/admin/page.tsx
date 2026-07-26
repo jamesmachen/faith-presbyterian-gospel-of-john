@@ -1,24 +1,23 @@
 import AdminPanel from "../admin-panel";
 import DocumentStore from "../document-store";
 import ImageStore from "../image-store";
-import { chatGPTSignOutPath, requireChatGPTUser } from "../chatgpt-auth";
-import { getSiteRole } from "@/db/access";
 import { withBasePath } from "@/lib/base-path";
+import { requireAdminPage } from "@/lib/admin-auth";
+import { signOut } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const user = await requireChatGPTUser("/admin");
-  const role = await getSiteRole(user.email);
+  const { admin, authenticatedEmail } = await requireAdminPage();
 
-  if (role !== "admin") {
+  if (!admin) {
     return (
       <main className="access-page">
         <section className="access-card">
           <img src={withBasePath("/fpc-logo.png")} alt="Faith Presbyterian Church" />
           <p className="eyebrow">Administrator access</p>
           <h1>This account is not an administrator.</h1>
-          <p>You are signed in as <strong>{user.email}</strong>.</p>
+          <p>You are signed in as <strong>{authenticatedEmail}</strong>, but this address is not authorized.</p>
           <a className="button button-primary" href={withBasePath("/")}>Return to the class site</a>
         </section>
       </main>
@@ -34,7 +33,7 @@ export default async function AdminPage() {
         </a>
         <div className="header-tools">
           <nav aria-label="Administrator navigation"><a href={withBasePath("/")}>Class site</a><a href="#passages">Passages</a><a href="#resources">Files</a></nav>
-          <div className="account-menu"><span>Administrator</span><a href={chatGPTSignOutPath("/")}>Sign out</a></div>
+          <div className="account-menu"><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath("/") }); }}><button type="submit">Sign out</button></form></div>
         </div>
       </header>
 
@@ -46,7 +45,7 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <AdminPanel currentEmail={user.email} />
+      <AdminPanel currentEmail={admin.email} currentRole={admin.role} />
 
       <section className="admin-resource-section section-shell" id="resources">
         <div className="section-heading solo">

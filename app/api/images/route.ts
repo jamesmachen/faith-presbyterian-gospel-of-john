@@ -1,5 +1,5 @@
-import { getSiteRole, normalizeEmail } from "@/db/access";
 import { getStorage } from "@/lib/blob-storage";
+import { requireAdminApi } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -42,14 +42,6 @@ function chunkKey(id: string, index: number) {
   return `${CHUNK_PREFIX}${id}/${index}`;
 }
 
-async function requireAdmin(request: Request) {
-  const email = request.headers.get("oai-authenticated-user-email");
-  if (!email) return { error: Response.json({ error: "Please sign in as an administrator." }, { status: 401 }) };
-  const normalized = normalizeEmail(email);
-  if (await getSiteRole(normalized) !== "admin") return { error: Response.json({ error: "Administrator access is required." }, { status: 403 }) };
-  return { email: normalized };
-}
-
 async function readSession(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const object = await getBucket().get(sessionKey(id));
@@ -87,8 +79,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin(request);
-  if (auth.error || !auth.email) return auth.error;
+  const auth = await requireAdminApi();
+  if (auth.error || !auth.admin) return auth.error;
   const url = new URL(request.url);
   const action = url.searchParams.get("action") || "start";
   try {
@@ -108,14 +100,14 @@ export async function POST(request: Request) {
         size,
         chunkSize: CHUNK_SIZE,
         totalChunks: Math.ceil(size / CHUNK_SIZE),
-        uploadedBy: auth.email,
+        uploadedBy: auth.admin.email,
       };
       await getBucket().put(sessionKey(id), JSON.stringify(session), { httpMetadata: { contentType: "application/json" } });
       return Response.json({ sessionId: id, chunkSize: CHUNK_SIZE, totalChunks: session.totalChunks }, { status: 201 });
     }
 
     const sessionId = url.searchParams.get("sessionId") ?? "";
-    const owned = await requireOwnedSession(sessionId, auth.email);
+    const owned = await requireOwnedSession(sessionId, auth.admin.email);
     if (owned.error || !owned.session) return owned.error;
     const session = owned.session;
 
@@ -146,7 +138,7 @@ export async function POST(request: Request) {
       if (offset !== session.size) return Response.json({ error: "The uploaded image size did not match the original file." }, { status: 400 });
       await storage.put(session.finalKey, complete, {
         httpMetadata: { contentType: session.contentType },
-        customMetadata: { originalName: session.filename, uploadedBy: auth.email },
+        customMetadata: { originalName: session.filename, uploadedBy: auth.admin.email },
       });
       await storage.delete([...temporaryKeys, sessionKey(session.id)]);
       return Response.json({ ok: true, key: session.finalKey, name: session.filename }, { status: 201 });
@@ -159,7 +151,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminApi();
   if (auth.error) return auth.error;
   const key = new URL(request.url).searchParams.get("key");
   if (!key?.startsWith(PREFIX)) return Response.json({ error: "Invalid image key." }, { status: 400 });

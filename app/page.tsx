@@ -1,11 +1,11 @@
 import DocumentStore from "./document-store";
 import ImageStore from "./image-store";
 import TranslationStore from "./translation-store";
-import { chatGPTSignInPath, chatGPTSignOutPath, getChatGPTUser } from "./chatgpt-auth";
-import { getSiteRole } from "@/db/access";
 import { listStudyPassages } from "@/db/site-config";
 import { withBasePath } from "@/lib/base-path";
 import { DEFAULT_STUDY_PASSAGES } from "./site-config";
+import { getAuthenticatedAdmin } from "@/lib/admin-auth";
+import { signOut } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +18,8 @@ const discussionQuestions = [
 ];
 
 export default async function Home() {
-  const user = await getChatGPTUser();
-  const role = user ? await getSiteRole(user.email) : null;
-  const isAdmin = role === "admin";
+  const admin = await getAuthenticatedAdmin();
+  const isAdmin = Boolean(admin);
   const schedule = await listStudyPassages().catch(() => DEFAULT_STUDY_PASSAGES);
   return (
     <main>
@@ -37,7 +36,7 @@ export default async function Home() {
             {isAdmin && <a href={withBasePath("/admin")}>ADMIN</a>}
           </nav>
           <div className="account-menu">
-            {isAdmin ? <><span>Administrator</span><a href={chatGPTSignOutPath("/")}>Sign out</a></> : user ? <><span>Not an admin</span><a href={chatGPTSignOutPath("/")}>Sign out</a></> : <a href={chatGPTSignInPath("/admin")}>Admin sign in</a>}
+            {admin ? <><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath("/") }); }}><button type="submit">Sign out</button></form></> : <a href={withBasePath("/admin/signin")}>Admin sign in</a>}
           </div>
         </div>
       </header>

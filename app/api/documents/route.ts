@@ -1,5 +1,5 @@
-import { getSiteRole, normalizeEmail, SiteRole } from "@/db/access";
 import { getStorage } from "@/lib/blob-storage";
+import { requireAdminApi } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,16 +17,6 @@ function safeFilename(filename: string) {
 
 function extensionOf(filename: string) {
   return filename.split(".").pop()?.toLowerCase() ?? "";
-}
-
-async function authorize(request: Request, requiredRole?: SiteRole) {
-  const email = request.headers.get("oai-authenticated-user-email");
-  if (!email) return { error: Response.json({ error: "Please sign in." }, { status: 401 }) };
-  const normalized = normalizeEmail(email);
-  const role = await getSiteRole(normalized);
-  if (!role) return { error: Response.json({ error: "Your account is not authorized for this site." }, { status: 403 }) };
-  if (requiredRole && role !== requiredRole) return { error: Response.json({ error: "Administrator access is required." }, { status: 403 }) };
-  return { email: normalized, role };
 }
 
 export async function GET(request: Request) {
@@ -63,8 +53,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await authorize(request, "admin");
-  if (auth.error || !auth.email) return auth.error;
+  const auth = await requireAdminApi();
+  if (auth.error || !auth.admin) return auth.error;
 
   try {
     const formData = await request.formData();
@@ -77,7 +67,7 @@ export async function POST(request: Request) {
     const key = `${PREFIX}${Date.now()}-${crypto.randomUUID()}-${filename}`;
     await getBucket().put(key, file.stream(), {
       httpMetadata: { contentType: file.type || "application/octet-stream" },
-      customMetadata: { originalName: filename, uploadedBy: auth.email },
+      customMetadata: { originalName: filename, uploadedBy: auth.admin.email },
     });
     return Response.json({ ok: true, key, name: filename }, { status: 201 });
   } catch (error) {
@@ -87,7 +77,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await authorize(request, "admin");
+  const auth = await requireAdminApi();
   if (auth.error) return auth.error;
   const key = new URL(request.url).searchParams.get("key");
   if (!key?.startsWith(PREFIX)) return Response.json({ error: "Invalid document key." }, { status: 400 });

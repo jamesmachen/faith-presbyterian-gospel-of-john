@@ -4,7 +4,16 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { StudyPassageConfig } from "./site-config";
 import { withBasePath } from "@/lib/base-path";
 
-type ManagedUser = { email: string; role: "admin"; createdAt: string; createdBy: string };
+type ManagedUser = {
+  email: string;
+  role: "owner" | "admin";
+  displayName: string | null;
+  active: boolean;
+  status: "invited" | "active" | "disabled";
+  createdAt: string;
+  createdBy: string;
+  lastSignInAt: string | null;
+};
 type ManagedTranslation = { id: string; name: string; abbreviation: string; url: string; iconKey: string | null };
 type TranslationApiResult = { error?: string; sessionId?: string; chunkSize?: number; totalChunks?: number; iconKey?: string };
 
@@ -44,11 +53,12 @@ async function uploadTranslationIcon(icon: File, onProgress: (message: string) =
   return complete.iconKey;
 }
 
-export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
+export default function AdminPanel({ currentEmail, currentRole }: { currentEmail: string; currentRole: "owner" | "admin" }) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [translations, setTranslations] = useState<ManagedTranslation[]>([]);
   const [passages, setPassages] = useState<StudyPassageConfig[]>([]);
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [status, setStatus] = useState("");
   const [translationStatus, setTranslationStatus] = useState("");
   const [scheduleStatus, setScheduleStatus] = useState("");
@@ -193,14 +203,53 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
     setBusy(true);
     setStatus("");
     try {
-      const response = await fetch(withBasePath("/api/users"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+      const response = await fetch(withBasePath("/api/users"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, displayName }) });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Could not save this user.");
       setEmail("");
-      setStatus("Administrator added.");
+      setDisplayName("");
+      setStatus("Administrator added and sign-in invitation sent.");
       await loadUsers();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not save this user.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendInvitation(userEmail: string) {
+    setBusy(true);
+    try {
+      const response = await fetch(withBasePath("/api/users"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: userEmail, action: "invite" }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Could not send the invitation.");
+      setStatus(`A sign-in link was sent to ${userEmail}.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not send the invitation.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setUserActive(userEmail: string, active: boolean) {
+    if (!window.confirm(`${active ? "Enable" : "Disable"} ${userEmail}?`)) return;
+    setBusy(true);
+    try {
+      const response = await fetch(withBasePath("/api/users"), {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: userEmail, active }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Could not update this administrator.");
+      setStatus(active ? "Administrator enabled." : "Administrator disabled.");
+      await loadUsers();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not update this administrator.");
     } finally {
       setBusy(false);
     }
@@ -296,16 +345,31 @@ export default function AdminPanel({ currentEmail }: { currentEmail: string }) {
           <div className="admin-tool-heading compact"><div><p className="eyebrow">Access</p><h3 id="administrators-heading">Administrators</h3></div></div>
           <form className="add-user-form admin-only" onSubmit={saveUser}>
             <label><span>Administrator email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="person@example.com" required /></label>
-            <button className="button button-primary" type="submit" disabled={busy}>Add administrator</button>
+            <label><span>Display name <small>optional</small></span><input type="text" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={120} /></label>
+            <button className="button button-primary" type="submit" disabled={busy}>Add & invite administrator</button>
           </form>
           <p className="admin-status" role="status" aria-live="polite">{status}</p>
           <div className="user-table" role="region" aria-label="Site administrators" tabIndex={0}>
             <table>
-              <thead><tr><th>Administrator email</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Administrator</th><th>Role</th><th>Status</th><th>Added</th><th>Last sign in</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {users.map((managedUser) => {
                   const isCurrentUser = managedUser.email.toLowerCase() === currentEmail.toLowerCase();
-                  return <tr key={managedUser.email}><td>{managedUser.email}{isCurrentUser && <small>You</small>}</td><td><button type="button" className="remove-button" disabled={busy || isCurrentUser} onClick={() => void removeUser(managedUser.email)}>Remove</button></td></tr>;
+                  const isOwner = managedUser.role === "owner";
+                  const canManage = currentRole === "owner" && !isOwner && !isCurrentUser;
+                  return <tr key={managedUser.email}>
+                    <td><strong>{managedUser.displayName || managedUser.email}</strong>{managedUser.displayName && <small>{managedUser.email}</small>}{isCurrentUser && <small>You</small>}</td>
+                    <td>{isOwner ? "Owner" : "Administrator"}</td>
+                    <td>{managedUser.status === "invited" ? "Invited / not yet signed in" : managedUser.status === "active" ? "Active" : "Disabled"}</td>
+                    <td>{new Date(managedUser.createdAt).toLocaleDateString()}</td>
+                    <td>{managedUser.lastSignInAt ? new Date(managedUser.lastSignInAt).toLocaleDateString() : "Never"}</td>
+                    <td>
+                      <button type="button" className="edit-button" disabled={busy || !managedUser.active} onClick={() => void resendInvitation(managedUser.email)}>Resend link</button>
+                      {!isOwner && <button type="button" className="edit-button" disabled={busy || !canManage} onClick={() => void setUserActive(managedUser.email, !managedUser.active)}>{managedUser.active ? "Disable" : "Enable"}</button>}
+                      {!isOwner && <button type="button" className="remove-button" disabled={busy || !canManage} onClick={() => void removeUser(managedUser.email)}>Remove</button>}
+                      {isOwner && <small>Protected owner</small>}
+                    </td>
+                  </tr>;
                 })}
               </tbody>
             </table>

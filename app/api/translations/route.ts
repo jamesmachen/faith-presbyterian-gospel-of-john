@@ -1,6 +1,6 @@
-import { getSiteRole, normalizeEmail } from "@/db/access";
 import { getBibleTranslation, listBibleTranslations, removeBibleTranslation, saveBibleTranslation, updateBibleTranslation } from "@/db/translations";
 import { getStorage } from "@/lib/blob-storage";
+import { requireAdminApi } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -31,14 +31,6 @@ function iconSessionKey(id: string) {
 
 function iconChunkKey(id: string, index: number) {
   return `${ICON_CHUNK_PREFIX}${id}/${index}`;
-}
-
-async function requireAdmin(request: Request) {
-  const email = request.headers.get("oai-authenticated-user-email");
-  if (!email) return { error: Response.json({ error: "Please sign in as an administrator." }, { status: 401 }) };
-  const normalized = normalizeEmail(email);
-  if (await getSiteRole(normalized) !== "admin") return { error: Response.json({ error: "Administrator access is required." }, { status: 403 }) };
-  return { email: normalized };
 }
 
 function cleanText(value: unknown, maxLength: number) {
@@ -78,8 +70,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin(request);
-  if (auth.error || !auth.email) return auth.error;
+  const auth = await requireAdminApi();
+  if (auth.error || !auth.admin) return auth.error;
   const requestUrl = new URL(request.url);
   const action = requestUrl.searchParams.get("action") || "create";
 
@@ -98,7 +90,7 @@ export async function POST(request: Request) {
         size,
         chunkSize: ICON_CHUNK_SIZE,
         totalChunks: Math.ceil(size / ICON_CHUNK_SIZE),
-        uploadedBy: auth.email,
+        uploadedBy: auth.admin.email,
       };
       await bucket().put(iconSessionKey(id), JSON.stringify(session), { httpMetadata: { contentType: "application/json" } });
       return Response.json({ sessionId: id, chunkSize: session.chunkSize, totalChunks: session.totalChunks }, { status: 201 });
@@ -106,7 +98,7 @@ export async function POST(request: Request) {
 
     if (action === "icon-chunk" || action === "icon-complete") {
       const sessionId = requestUrl.searchParams.get("sessionId") ?? "";
-      const owned = await requireOwnedIconSession(sessionId, auth.email);
+      const owned = await requireOwnedIconSession(sessionId, auth.admin.email);
       if (owned.error || !owned.session) return owned.error;
       const session = owned.session;
 
@@ -136,7 +128,7 @@ export async function POST(request: Request) {
       if (offset !== session.size) return Response.json({ error: "The uploaded icon size did not match the original file." }, { status: 400 });
       await storage.put(session.iconKey, complete, {
         httpMetadata: { contentType: session.contentType },
-        customMetadata: { uploadedBy: auth.email, kind: "bible-translation-icon" },
+        customMetadata: { uploadedBy: auth.admin.email, kind: "bible-translation-icon" },
       });
       await storage.delete([...temporaryKeys, iconSessionKey(session.id)]);
       return Response.json({ ok: true, iconKey: session.iconKey }, { status: 201 });
@@ -157,7 +149,7 @@ export async function POST(request: Request) {
     if (iconKey) {
       if (!iconKey.startsWith(ICON_PREFIX)) return Response.json({ error: "Invalid translation icon." }, { status: 400 });
       const icon = await bucket().head(iconKey);
-      if (!icon || icon.customMetadata?.uploadedBy !== auth.email) return Response.json({ error: "The translation icon could not be verified." }, { status: 400 });
+      if (!icon || icon.customMetadata?.uploadedBy !== auth.admin.email) return Response.json({ error: "The translation icon could not be verified." }, { status: 400 });
     }
 
     try {
@@ -167,7 +159,7 @@ export async function POST(request: Request) {
         abbreviation,
         url: url.toString(),
         iconKey,
-        createdBy: auth.email,
+        createdBy: auth.admin.email,
       });
     } catch (error) {
       if (iconKey) await bucket().delete(iconKey);
@@ -180,7 +172,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminApi();
   if (auth.error) return auth.error;
   const id = new URL(request.url).searchParams.get("id")?.trim();
   if (!id) return Response.json({ error: "Choose a translation to remove." }, { status: 400 });
@@ -196,8 +188,8 @@ export async function DELETE(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireAdmin(request);
-  if (auth.error || !auth.email) return auth.error;
+  const auth = await requireAdminApi();
+  if (auth.error || !auth.admin) return auth.error;
   let uploadedReplacementKey: string | null = null;
   try {
     const body = (await request.json()) as {
@@ -225,7 +217,7 @@ export async function PATCH(request: Request) {
     if (uploadedReplacementKey) {
       if (!uploadedReplacementKey.startsWith(ICON_PREFIX)) return Response.json({ error: "Invalid replacement icon." }, { status: 400 });
       const icon = await bucket().head(uploadedReplacementKey);
-      if (!icon || icon.customMetadata?.uploadedBy !== auth.email) return Response.json({ error: "The replacement icon could not be verified." }, { status: 400 });
+      if (!icon || icon.customMetadata?.uploadedBy !== auth.admin.email) return Response.json({ error: "The replacement icon could not be verified." }, { status: 400 });
     }
 
     const nextIconKey = body.removeIcon ? null : uploadedReplacementKey || existing.iconKey;
