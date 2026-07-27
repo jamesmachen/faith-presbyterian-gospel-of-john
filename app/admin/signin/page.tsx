@@ -1,5 +1,7 @@
 import { signIn } from "@/auth";
 import { withBasePath } from "@/lib/base-path";
+import { isSuccessfulEmailSignInResult } from "@/lib/auth-routing";
+import { redirect } from "next/navigation";
 
 export default async function AdminSignInPage({
   searchParams,
@@ -11,10 +13,21 @@ export default async function AdminSignInPage({
   async function requestMagicLink(formData: FormData) {
     "use server";
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
-    await signIn("resend", {
-      email,
-      redirectTo: withBasePath("/admin"),
-    });
+    let result: string | undefined;
+    try {
+      result = await signIn("resend", {
+        email,
+        redirect: false,
+        redirectTo: withBasePath("/admin"),
+      });
+    } catch {
+      redirect(`${withBasePath("/admin/signin")}?error=EmailSignin`);
+    }
+    redirect(
+      isSuccessfulEmailSignInResult(result)
+        ? withBasePath("/admin/verify")
+        : `${withBasePath("/admin/signin")}?error=EmailSignin`,
+    );
   }
 
   return (

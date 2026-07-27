@@ -1,31 +1,33 @@
 import NextAuth from "next-auth";
-import Resend from "next-auth/providers/resend";
 import PostgresAdapter from "@auth/pg-adapter";
 import { authPool, recordSuccessfulSignIn } from "@/db/auth-pool";
-import { withBasePath } from "@/lib/base-path";
-
-const resendKey = process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY;
+import { AUTH_INTERNAL_BASE_PATH } from "@/lib/auth-routing";
+import { safeAuthError } from "@/lib/auth-logging";
+import { createResendProvider } from "@/lib/resend-provider";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PostgresAdapter(authPool),
-  basePath: withBasePath("/api/auth"),
+  basePath: AUTH_INTERNAL_BASE_PATH,
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "database",
     maxAge: 30 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
   },
-  providers: [
-    Resend({
-      apiKey: resendKey,
-      from: process.env.EMAIL_FROM,
-      maxAge: 15 * 60,
-    }),
-  ],
+  providers: [createResendProvider()],
   pages: {
-    signIn: withBasePath("/admin/signin"),
-    verifyRequest: withBasePath("/admin/verify"),
-    error: withBasePath("/admin/signin"),
+    signIn: "/admin/signin",
+    verifyRequest: "/admin/verify",
+    error: "/admin/signin",
+  },
+  logger: {
+    error(error) {
+      console.error(`[auth] ${JSON.stringify({ event: "error", ...safeAuthError(error) })}`);
+    },
+    warn(code) {
+      console.warn(`[auth] ${JSON.stringify({ event: "warning", code })}`);
+    },
+    debug() {},
   },
   callbacks: {
     async session({ session, user }) {

@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "npm run build && node --test tests/native-next.test.mjs && tsx --test tests/admin-auth.test.ts",
+    "test": "npm run build && node --test tests/native-next.test.mjs && tsx --test tests/admin-auth.test.ts tests/auth-flow.integration.test.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "echo Postgres tables are initialized by the application"
   },

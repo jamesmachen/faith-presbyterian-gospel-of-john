@@ -52,12 +52,19 @@ test("all administrator mutation routes use validated server sessions", async ()
   }
 });
 
-test("Auth.js routes and pages use the Sunday School base path", async () => {
-  const [authSource, routeSource] = await Promise.all([
+test("Auth.js uses internal paths while Next.js owns the Sunday School base path", async () => {
+  const [authSource, routeSource, signInSource] = await Promise.all([
     readFile(new URL("../auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/[...nextauth]/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/signin/page.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(authSource, /withBasePath\(["']\/api\/auth["']\)/);
-  assert.match(authSource, /withBasePath\(["']\/admin\/signin["']\)/);
+  assert.match(authSource, /basePath:\s*AUTH_INTERNAL_BASE_PATH/);
+  assert.match(authSource, /signIn:\s*["']\/admin\/signin["']/);
+  assert.match(authSource, /verifyRequest:\s*["']\/admin\/verify["']/);
+  assert.doesNotMatch(authSource, /withBasePath/);
   assert.match(routeSource, /handlers/);
+  assert.match(signInSource, /redirect:\s*false/);
+  assert.match(signInSource, /withBasePath\(["']\/admin\/verify["']\)/);
+  assert.match(signInSource, /catch\s*\{/);
+  assert.match(signInSource, /error=EmailSignin/);
 });
