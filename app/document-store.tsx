@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import { withBasePath } from "@/lib/base-path";
 import AssetEditModal from "./asset-edit-modal";
 import ResourceViewer from "./resource-viewer";
@@ -13,9 +14,6 @@ type StoredDocument = {
   size: number;
   uploaded: string;
 };
-
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.md,.rtf,.ppt,.pptx,.xls,.xlsx";
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -60,20 +58,30 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   async function uploadDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedFile) return setStatus("Choose a class material file first.");
-    if (selectedFile.name.toLowerCase().endsWith(".doc")) return setStatus("Legacy .doc files are not supported. Convert this file to .docx or PDF before uploading.");
     if (!displayText.trim()) return setStatus("Display text is required.");
-    if (selectedFile.size > MAX_FILE_SIZE) return setStatus("Please choose a file smaller than 15 MB.");
 
     setIsUploading(true);
-    setStatus(`Uploading ${selectedFile.name}…`);
-    const formData = new FormData();
-    formData.set("file", selectedFile);
-    formData.set("displayText", displayText);
+    setStatus(`Preparing ${selectedFile.name} for upload…`);
 
     try {
-      const response = await fetch(withBasePath("/api/documents"), { method: "POST", body: formData });
+      const safeName = selectedFile.name.replace(/[^a-zA-Z0-9._ -]/g, "_").replace(/\s+/g, " ").slice(0, 150) || "document";
+      const key = `documents/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+      const blob = await upload(key, selectedFile, {
+        access: "public",
+        handleUploadUrl: withBasePath("/api/documents"),
+        multipart: true,
+        clientPayload: JSON.stringify({ filename: safeName }),
+        onUploadProgress: ({ percentage }) => {
+          setStatus(`Uploading ${selectedFile.name}… ${Math.round(percentage)}%`);
+        },
+      });
+      const response = await fetch(withBasePath("/api/documents"), {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: blob.pathname, filename: safeName, displayText }),
+      });
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error || "Upload failed.");
+      if (!response.ok) throw new Error(result.error || "The file uploaded, but its details could not be saved.");
       setSelectedFile(null);
       setDisplayText("");
       if (inputRef.current) inputRef.current.value = "";
@@ -159,9 +167,9 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
         onClose={() => setViewingKey(null)}
       />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadDocument}>
-        <div><strong>Add class material</strong><small>PDF, Word, text, presentation, or spreadsheet · up to 15 MB</small></div>
+        <div><strong>Add class material</strong><small>Any file type · large files upload directly and securely</small></div>
         <label className="asset-display-field"><span>Display text</span><input type="text" value={displayText} onChange={(event) => setDisplayText(event.target.value)} maxLength={160} placeholder="Text shown in the Class Materials list" required /></label>
-        <label className="file-picker"><span>{selectedFile ? "Choose another" : "Choose file"}</span><input ref={inputRef} type="file" name="file" accept={ACCEPTED_EXTENSIONS} onChange={chooseFile} /></label>
+        <label className="file-picker"><span>{selectedFile ? "Choose another" : "Choose file"}</span><input ref={inputRef} type="file" name="file" onChange={chooseFile} /></label>
         <button type="submit" disabled={!selectedFile || !displayText.trim() || isUploading}>{isUploading ? "Uploading…" : "Upload"}</button>
         <p className="upload-status" role="status" aria-live="polite">{status}</p>
       </form>}

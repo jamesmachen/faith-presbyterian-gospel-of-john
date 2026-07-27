@@ -96,8 +96,15 @@ test("uploaded resources use lazy public viewers without admin controls", async 
   assert.match(docx, /renderAsync/);
   assert.match(documents, /<ResourceViewer/);
   assert.match(images, /<ResourceViewer/);
-  assert.doesNotMatch(documents, /\.pdf,\.doc,/);
-  assert.match(documentsRoute, /Legacy \.doc files are not supported/);
+  assert.match(documents, /import \{ upload \} from "@vercel\/blob\/client"/);
+  assert.match(documents, /multipart:\s*true/);
+  assert.match(documents, /onUploadProgress/);
+  assert.match(documents, /Any file type/);
+  assert.doesNotMatch(documents, /accept=\{/);
+  assert.doesNotMatch(documents, /MAX_FILE_SIZE|ACCEPTED_EXTENSIONS|Legacy \.doc/);
+  assert.match(documentsRoute, /handleUpload/);
+  assert.match(documentsRoute, /maximumSizeInBytes:\s*MAX_FILE_SIZE/);
+  assert.doesNotMatch(documentsRoute, /ALLOWED_EXTENSIONS|Legacy \.doc/);
   assert.match(packageJson, /"pdfjs-dist"/);
   assert.match(packageJson, /"docx-preview"/);
 });
