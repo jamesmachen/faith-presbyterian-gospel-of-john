@@ -21,12 +21,12 @@ export default async function AdminSignInPage({
         redirectTo: withBasePath("/admin"),
       });
     } catch {
-      redirect(`${withBasePath("/admin/signin")}?error=EmailSignin`);
+      redirect("/admin/signin?error=EmailSignin");
     }
     redirect(
       isSuccessfulEmailSignInResult(result)
-        ? withBasePath("/admin/verify")
-        : `${withBasePath("/admin/signin")}?error=EmailSignin`,
+        ? "/admin/verify"
+        : "/admin/signin?error=EmailSignin",
     );
   }
 

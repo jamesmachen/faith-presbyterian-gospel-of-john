@@ -60,6 +60,9 @@ After Resend accepts an email, the server action sends the browser directly to:
 
 `https://silasfaithpres.org/sunday-school/admin/verify`
 
+Server Action redirects use application-relative `/admin/*` paths because
+Next.js adds its configured base path to redirect responses.
+
 The emailed callback returns through the public Auth.js endpoint and then
 redirects to:
 

@@ -64,7 +64,9 @@ test("Auth.js uses internal paths while Next.js owns the Sunday School base path
   assert.doesNotMatch(authSource, /withBasePath/);
   assert.match(routeSource, /handlers/);
   assert.match(signInSource, /redirect:\s*false/);
-  assert.match(signInSource, /withBasePath\(["']\/admin\/verify["']\)/);
+  assert.match(signInSource, /redirect\(\s*[\s\S]*["']\/admin\/verify["']/);
+  assert.doesNotMatch(signInSource, /withBasePath\(["']\/admin\/verify["']\)/);
+  assert.doesNotMatch(signInSource, /withBasePath\(["']\/admin\/signin["']\)/);
   assert.match(signInSource, /catch\s*\{/);
   assert.match(signInSource, /error=EmailSignin/);
 });
