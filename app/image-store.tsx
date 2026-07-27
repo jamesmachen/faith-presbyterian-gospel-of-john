@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import AssetEditModal from "./asset-edit-modal";
 
 type StoredImage = {
   key: string;
@@ -42,6 +43,7 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editingImage = images.find((image) => image.key === editingKey) ?? null;
 
   const loadImages = useCallback(async () => {
     try {
@@ -149,14 +151,17 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
               <button type="button" className="edit-button" onClick={() => { setEditingKey(image.key); setEditingDisplayText(image.displayText); }}>Edit text</button>
               <button type="button" className="document-delete" onClick={() => void deleteImage(image)} aria-label={`Delete ${image.filename}`}>Delete</button>
             </div>}
-            {isAdmin && editingKey === image.key && <form className="asset-edit-form" onSubmit={(event) => { event.preventDefault(); void updateDisplayText(image); }}>
-              <label><span>Display text</span><input value={editingDisplayText} onChange={(event) => setEditingDisplayText(event.target.value)} maxLength={160} required /></label>
-              <small>Filename: {image.filename}</small>
-              <div><button type="button" className="edit-button" onClick={() => setEditingKey(null)}>Cancel</button><button type="submit" className="button button-primary">Save</button></div>
-            </form>}
           </li>
         ))}
       </ul>
+      {isAdmin && editingImage && <AssetEditModal
+        title="Reference Library Asset"
+        filename={editingImage.filename}
+        value={editingDisplayText}
+        onChange={setEditingDisplayText}
+        onCancel={() => setEditingKey(null)}
+        onSubmit={(event) => { event.preventDefault(); void updateDisplayText(editingImage); }}
+      />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadImage}>
         <div><strong>Add a reference asset</strong><small>PNG, JPG, WebP, or GIF · up to 10 MB</small></div>
         <label className="asset-display-field"><span>Display text</span><input type="text" value={displayText} onChange={(event) => setDisplayText(event.target.value)} maxLength={160} placeholder="Text shown in the Reference Library list" required /></label>

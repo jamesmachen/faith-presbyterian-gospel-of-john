@@ -54,5 +54,22 @@ test("both asset APIs expose display text and authenticated metadata updates", a
     assert.match(source, /updateCustomMetadata/);
   }
   assert.match(storage, /const merged = \{ \.\.\.existing, \.\.\.metadata \}/);
+  assert.match(storage, /allowOverwrite:\s*true/);
 });
 
+test("Edit Text uses a roomy modal for both asset libraries", async () => {
+  const [documents, images, modal, styles] = await Promise.all([
+    readFile(new URL("../app/document-store.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/image-store.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/asset-edit-modal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(documents, /<AssetEditModal/);
+  assert.match(images, /<AssetEditModal/);
+  assert.match(modal, /role="dialog"/);
+  assert.match(modal, /aria-modal="true"/);
+  assert.match(modal, /<textarea/);
+  assert.match(modal, /rows=\{4\}/);
+  assert.match(styles, /\.asset-modal\s*\{[^}]*760px/);
+  assert.match(styles, /\.asset-modal textarea\s*\{[^}]*min-height:\s*130px/);
+});

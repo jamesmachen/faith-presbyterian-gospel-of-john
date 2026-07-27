@@ -101,12 +101,21 @@ nav a:hover { border-color: var(--terra); }
 .edit-button { border: 1px solid var(--sage); color: var(--sage); }
 .document-delete:hover, .remove-button:hover { background: #fff2f2; }
 .edit-button:hover { background: var(--pale); }
-.asset-edit-form { margin: 0 4px 12px; padding: 14px; display: grid; grid-column: 1 / -1; grid-template-columns: minmax(220px, 1fr) auto auto; align-items: end; gap: 12px; border: 1px solid #a9cce4; border-radius: 7px; background: #f8fcff; }
-.asset-edit-form label span, .asset-display-field span { margin-bottom: 5px; display: block; color: var(--sage); font-size: .66rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
-.asset-edit-form input, .asset-display-field input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #9dbbd0; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
-.asset-edit-form > small { padding-bottom: 10px; color: var(--muted); }
-.asset-edit-form > div { display: flex; gap: 7px; }
-.asset-edit-form .button { min-height: 34px; padding: 7px 11px; font-size: .72rem; }
+.asset-display-field span { margin-bottom: 5px; display: block; color: var(--sage); font-size: .66rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.asset-display-field input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #9dbbd0; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
+.asset-modal-backdrop { position: fixed; inset: 0; z-index: 100; padding: 24px; display: grid; place-items: center; overflow-y: auto; background: rgba(4, 27, 57, .68); backdrop-filter: blur(4px); }
+.asset-modal { width: min(760px, 100%); padding: 32px; border: 1px solid #9fc8e5; border-radius: 12px; background: white; box-shadow: 0 28px 80px rgba(4, 27, 57, .32); }
+.asset-modal form { display: grid; gap: 22px; }
+.asset-modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
+.asset-modal-heading .eyebrow { margin: 0 0 5px; }
+.asset-modal-heading h2 { margin: 0; color: var(--sage); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.asset-modal-close { width: 42px; height: 42px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 50%; background: var(--pale); color: var(--sage); font-size: 1.7rem; line-height: 1; cursor: pointer; }
+.asset-modal-filename { margin: 0; padding: 12px 14px; overflow-wrap: anywhere; border-radius: 6px; background: var(--pale); color: var(--muted); font-size: .82rem; }
+.asset-modal label span { margin-bottom: 7px; display: block; color: var(--sage); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.asset-modal textarea { width: 100%; min-height: 130px; padding: 14px 16px; resize: vertical; overflow-wrap: anywhere; border: 1px solid #84abc7; border-radius: 7px; background: white; color: var(--ink); font: inherit; font-size: 1.05rem; line-height: 1.5; }
+.asset-modal textarea:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
+.asset-modal label small { margin-top: 6px; display: block; color: var(--muted); text-align: right; }
+.asset-modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .visitor-note { margin: 0 23px 23px; padding: 14px 16px; border-radius: 6px; background: var(--pale); color: var(--muted); font-size: .78rem; }
 .upload-panel { margin: 0 23px 23px; padding: 20px; display: grid; grid-template-columns: minmax(180px, .8fr) minmax(220px, 1fr) auto auto; align-items: end; gap: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--pale); }
 .upload-panel strong, .upload-panel small { display: block; }
@@ -281,8 +290,6 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .download-list small { text-align: left; }
   .uploaded-document { align-items: start; }
   .asset-row-actions { padding-top: 10px; }
-  .asset-edit-form { grid-template-columns: 1fr; }
-  .asset-edit-form > small { padding-bottom: 0; }
   .upload-panel { grid-template-columns: 1fr 1fr; }
   .upload-panel > div { grid-column: 1 / -1; }
   .add-user-form { grid-template-columns: 1fr; }
@@ -298,6 +305,9 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .upload-panel > div, .upload-status { grid-column: auto; }
   .uploaded-document { grid-template-columns: 1fr; }
   .asset-row-actions { padding: 0 4px 10px; }
+  .asset-modal-backdrop { padding: 12px; }
+  .asset-modal { padding: 22px 18px; }
+  .asset-modal-actions { align-items: stretch; flex-direction: column-reverse; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

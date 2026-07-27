@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import AssetEditModal from "./asset-edit-modal";
 
 type StoredDocument = {
   key: string;
@@ -29,6 +30,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editingDocument = documents.find((document) => document.key === editingKey) ?? null;
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -130,14 +132,17 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
               <button type="button" className="edit-button" onClick={() => { setEditingKey(document.key); setEditingDisplayText(document.displayText); }}>Edit text</button>
               <button type="button" className="document-delete" onClick={() => void deleteDocument(document)} aria-label={`Delete ${document.filename}`}>Delete</button>
             </div>}
-            {isAdmin && editingKey === document.key && <form className="asset-edit-form" onSubmit={(event) => { event.preventDefault(); void updateDisplayText(document); }}>
-              <label><span>Display text</span><input value={editingDisplayText} onChange={(event) => setEditingDisplayText(event.target.value)} maxLength={160} required /></label>
-              <small>Filename: {document.filename}</small>
-              <div><button type="button" className="edit-button" onClick={() => setEditingKey(null)}>Cancel</button><button type="submit" className="button button-primary">Save</button></div>
-            </form>}
           </li>
         ))}
       </ul>
+      {isAdmin && editingDocument && <AssetEditModal
+        title="Class Material"
+        filename={editingDocument.filename}
+        value={editingDisplayText}
+        onChange={setEditingDisplayText}
+        onCancel={() => setEditingKey(null)}
+        onSubmit={(event) => { event.preventDefault(); void updateDisplayText(editingDocument); }}
+      />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadDocument}>
         <div><strong>Add class material</strong><small>PDF, Word, text, presentation, or spreadsheet · up to 15 MB</small></div>
         <label className="asset-display-field"><span>Display text</span><input type="text" value={displayText} onChange={(event) => setDisplayText(event.target.value)} maxLength={160} placeholder="Text shown in the Class Materials list" required /></label>

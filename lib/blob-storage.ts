@@ -68,6 +68,7 @@ async function writeMetadata(key: string, metadata: ObjectMetadata) {
   await put(`${key}${METADATA_SUFFIX}`, JSON.stringify(metadata), {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: "application/json",
     token: token(),
   });
