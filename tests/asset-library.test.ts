@@ -73,3 +73,31 @@ test("Edit Text uses a roomy modal for both asset libraries", async () => {
   assert.match(styles, /\.asset-modal\s*\{[^}]*760px/);
   assert.match(styles, /\.asset-modal textarea\s*\{[^}]*min-height:\s*130px/);
 });
+
+test("uploaded resources use lazy public viewers without admin controls", async () => {
+  const [viewer, pdf, docx, documents, images, documentsRoute, packageJson] = await Promise.all([
+    readFile(new URL("../app/resource-viewer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/pdf-resource-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/docx-resource-preview.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/document-store.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/image-store.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/documents/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+  ]);
+  assert.match(viewer, /lazy\(\(\) => import\(["']\.\/pdf-resource-preview["']\)\)/);
+  assert.match(viewer, /lazy\(\(\) => import\(["']\.\/docx-resource-preview["']\)\)/);
+  assert.match(viewer, /Download Original/);
+  assert.match(viewer, /requestFullscreen/);
+  assert.match(viewer, /Preview unavailable/);
+  assert.doesNotMatch(viewer, /Edit text|Delete/);
+  assert.match(pdf, /import\(["']pdfjs-dist["']\)/);
+  assert.match(pdf, /response\.arrayBuffer\(\)/);
+  assert.match(docx, /import\(["']docx-preview["']\)/);
+  assert.match(docx, /renderAsync/);
+  assert.match(documents, /<ResourceViewer/);
+  assert.match(images, /<ResourceViewer/);
+  assert.doesNotMatch(documents, /\.pdf,\.doc,/);
+  assert.match(documentsRoute, /Legacy \.doc files are not supported/);
+  assert.match(packageJson, /"pdfjs-dist"/);
+  assert.match(packageJson, /"docx-preview"/);
+});

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const PREFIX = "documents/";
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "txt", "md", "rtf", "ppt", "pptx", "xls", "xlsx"]);
+const ALLOWED_EXTENSIONS = new Set(["pdf", "docx", "txt", "md", "rtf", "ppt", "pptx", "xls", "xlsx"]);
 
 function getBucket() {
   return getStorage();
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     if (!(file instanceof File)) return Response.json({ error: "Choose a document to upload." }, { status: 400 });
     if (!file.size || file.size > MAX_FILE_SIZE) return Response.json({ error: "Documents must be smaller than 15 MB." }, { status: 400 });
+    if (extensionOf(file.name) === "doc") return Response.json({ error: "Legacy .doc files are not supported. Convert this file to .docx or PDF before uploading." }, { status: 400 });
     if (!ALLOWED_EXTENSIONS.has(extensionOf(file.name))) return Response.json({ error: "That document type is not supported." }, { status: 400 });
 
     const filename = safeFilename(file.name);

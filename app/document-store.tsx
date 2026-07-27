@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
 import AssetEditModal from "./asset-edit-modal";
+import ResourceViewer from "./resource-viewer";
 
 type StoredDocument = {
   key: string;
@@ -14,7 +15,7 @@ type StoredDocument = {
 };
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = ".pdf,.doc,.docx,.txt,.md,.rtf,.ppt,.pptx,.xls,.xlsx";
+const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.md,.rtf,.ppt,.pptx,.xls,.xlsx";
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -27,10 +28,12 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   const [displayText, setDisplayText] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingDisplayText, setEditingDisplayText] = useState("");
+  const [viewingKey, setViewingKey] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const editingDocument = documents.find((document) => document.key === editingKey) ?? null;
+  const viewingDocument = documents.find((document) => document.key === viewingKey) ?? null;
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -57,6 +60,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   async function uploadDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedFile) return setStatus("Choose a class material file first.");
+    if (selectedFile.name.toLowerCase().endsWith(".doc")) return setStatus("Legacy .doc files are not supported. Convert this file to .docx or PDF before uploading.");
     if (!displayText.trim()) return setStatus("Display text is required.");
     if (selectedFile.size > MAX_FILE_SIZE) return setStatus("Please choose a file smaller than 15 MB.");
 
@@ -124,14 +128,17 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
         <li><a href={withBasePath("/resources/class-schedule.md")} download><span>Weeks 10–21 Schedule</span><small>Markdown document · 2 KB</small></a></li>
         {documents.map((document) => (
           <li key={document.key} className="uploaded-document">
-            <a href={withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`)} download={document.filename}>
+            <button type="button" className="resource-view-trigger" onClick={() => setViewingKey(document.key)} aria-label={`View ${document.displayText}`}>
               <span>{document.displayText}</span>
               <small>{isAdmin ? `Filename: ${document.filename} · ` : ""}Uploaded class material · {formatSize(document.size)}</small>
-            </a>
-            {isAdmin && <div className="asset-row-actions">
+            </button>
+            <div className="asset-row-actions">
+              <a className="resource-download-action" href={withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`)} download={document.filename}>Download Original</a>
+              {isAdmin && <>
               <button type="button" className="edit-button" onClick={() => { setEditingKey(document.key); setEditingDisplayText(document.displayText); }}>Edit text</button>
               <button type="button" className="document-delete" onClick={() => void deleteDocument(document)} aria-label={`Delete ${document.filename}`}>Delete</button>
-            </div>}
+              </>}
+            </div>
           </li>
         ))}
       </ul>
@@ -142,6 +149,14 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
         onChange={setEditingDisplayText}
         onCancel={() => setEditingKey(null)}
         onSubmit={(event) => { event.preventDefault(); void updateDisplayText(editingDocument); }}
+      />}
+      {viewingDocument && <ResourceViewer
+        resource={{
+          title: viewingDocument.displayText || viewingDocument.filename,
+          filename: viewingDocument.filename,
+          url: withBasePath(`/api/documents?key=${encodeURIComponent(viewingDocument.key)}`),
+        }}
+        onClose={() => setViewingKey(null)}
       />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadDocument}>
         <div><strong>Add class material</strong><small>PDF, Word, text, presentation, or spreadsheet · up to 15 MB</small></div>

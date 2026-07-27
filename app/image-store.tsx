@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
 import AssetEditModal from "./asset-edit-modal";
+import ResourceViewer from "./resource-viewer";
 
 type StoredImage = {
   key: string;
@@ -40,10 +41,12 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
   const [displayText, setDisplayText] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingDisplayText, setEditingDisplayText] = useState("");
+  const [viewingKey, setViewingKey] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const editingImage = images.find((image) => image.key === editingKey) ?? null;
+  const viewingImage = images.find((image) => image.key === viewingKey) ?? null;
 
   const loadImages = useCallback(async () => {
     try {
@@ -146,11 +149,14 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
         <li><a href={withBasePath("/resources/gospel-of-john-class-cover.png")} download><span>Gospel of John Class Cover</span><small>PNG image · landscape</small></a></li>
         {images.map((image) => (
           <li key={image.key} className="uploaded-document">
-            <a href={withBasePath(`/api/images?key=${encodeURIComponent(image.key)}`)} download={image.filename}><span>{image.displayText}</span><small>{isAdmin ? `Filename: ${image.filename} · ` : ""}Reference asset · {formatSize(image.size)}</small></a>
-            {isAdmin && <div className="asset-row-actions">
+            <button type="button" className="resource-view-trigger" onClick={() => setViewingKey(image.key)} aria-label={`View ${image.displayText}`}><span>{image.displayText}</span><small>{isAdmin ? `Filename: ${image.filename} · ` : ""}Reference asset · {formatSize(image.size)}</small></button>
+            <div className="asset-row-actions">
+              <a className="resource-download-action" href={withBasePath(`/api/images?key=${encodeURIComponent(image.key)}`)} download={image.filename}>Download Original</a>
+              {isAdmin && <>
               <button type="button" className="edit-button" onClick={() => { setEditingKey(image.key); setEditingDisplayText(image.displayText); }}>Edit text</button>
               <button type="button" className="document-delete" onClick={() => void deleteImage(image)} aria-label={`Delete ${image.filename}`}>Delete</button>
-            </div>}
+              </>}
+            </div>
           </li>
         ))}
       </ul>
@@ -161,6 +167,14 @@ export default function ImageStore({ isAdmin }: { isAdmin: boolean }) {
         onChange={setEditingDisplayText}
         onCancel={() => setEditingKey(null)}
         onSubmit={(event) => { event.preventDefault(); void updateDisplayText(editingImage); }}
+      />}
+      {viewingImage && <ResourceViewer
+        resource={{
+          title: viewingImage.displayText || viewingImage.filename,
+          filename: viewingImage.filename,
+          url: withBasePath(`/api/images?key=${encodeURIComponent(viewingImage.key)}`),
+        }}
+        onClose={() => setViewingKey(null)}
       />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadImage}>
         <div><strong>Add a reference asset</strong><small>PNG, JPG, WebP, or GIF · up to 10 MB</small></div>
