@@ -69,11 +69,11 @@ export default async function Home() {
         <div className="resource-grid">
           <TranslationStore />
           <details className="resource-card" open>
-            <summary><span className="resource-icon">D</span><span><strong>Documents</strong><small>Study guides & worksheets</small></span><b aria-hidden="true">+</b></summary>
+            <summary><span className="resource-icon">C</span><span><strong>Class Materials</strong><small>Study guides & worksheets</small></span><b aria-hidden="true">+</b></summary>
             <DocumentStore isAdmin={false} />
           </details>
-          <details className="resource-card">
-            <summary><span className="resource-icon">I</span><span><strong>Images</strong><small>Class artwork & sharing graphics</small></span><b aria-hidden="true">+</b></summary>
+          <details className="resource-card" open>
+            <summary><span className="resource-icon">R</span><span><strong>Reference Library</strong><small>Class artwork & sharing graphics</small></span><b aria-hidden="true">+</b></summary>
             <ImageStore isAdmin={false} />
           </details>
         </div>

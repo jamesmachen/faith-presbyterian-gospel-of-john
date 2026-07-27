@@ -41,7 +41,7 @@ export default async function AdminPage() {
         <div className="section-shell">
           <p className="eyebrow">Administrator area</p>
           <h1>Site settings & resources</h1>
-          <p>Update the passage tiles, Bible resources, class files, images, and administrator list.</p>
+          <p>Update the passage tiles, Bible resources, class materials, reference assets, and administrator list.</p>
         </div>
       </section>
 
@@ -50,16 +50,16 @@ export default async function AdminPage() {
       <section className="admin-resource-section section-shell" id="resources">
         <div className="section-heading solo">
           <p className="eyebrow">Resource stores</p>
-          <h2>Documents & images</h2>
-          <p className="admin-intro">Upload or delete class materials here. Visitors only see the downloadable items on the main site.</p>
+          <h2>Class Materials & Reference Library</h2>
+          <p className="admin-intro">Upload, label, or delete downloadable assets here. Visitors see each item&apos;s display text on the main site.</p>
         </div>
         <div className="resource-grid">
           <details className="resource-card" open>
-            <summary><span className="resource-icon">D</span><span><strong>Documents</strong><small>Upload and manage class files</small></span><b aria-hidden="true">+</b></summary>
+            <summary><span className="resource-icon">C</span><span><strong>Class Materials</strong><small>Upload and manage class files</small></span><b aria-hidden="true">+</b></summary>
             <DocumentStore isAdmin />
           </details>
           <details className="resource-card" open>
-            <summary><span className="resource-icon">I</span><span><strong>Images</strong><small>Upload and manage class artwork</small></span><b aria-hidden="true">+</b></summary>
+            <summary><span className="resource-icon">R</span><span><strong>Reference Library</strong><small>Upload and manage reference assets</small></span><b aria-hidden="true">+</b></summary>
             <ImageStore isAdmin />
           </details>
         </div>

@@ -1,5 +1,6 @@
 import { getStorage } from "@/lib/blob-storage";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { mergeAssetMetadata, normalizeDisplayText } from "@/lib/asset-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ type UploadSession = {
   id: string;
   finalKey: string;
   filename: string;
+  displayText: string;
   contentType: string;
   size: number;
   chunkSize: number;
@@ -71,7 +73,17 @@ export async function GET(request: Request) {
       return new Response(object.body, { headers });
     }
     const listed = await bucket.list({ prefix: PREFIX, include: ["customMetadata"] });
-    const images = listed.objects.map((object) => ({ key: object.key, name: object.customMetadata?.originalName || object.key.slice(PREFIX.length), size: object.size, uploaded: object.uploaded.toISOString() })).sort((a, b) => b.uploaded.localeCompare(a.uploaded));
+    const images = listed.objects.map((object) => {
+      const filename = object.customMetadata?.originalName || object.key.slice(PREFIX.length);
+      return {
+        key: object.key,
+        name: filename,
+        filename,
+        displayText: normalizeDisplayText(object.customMetadata?.displayText, filename),
+        size: object.size,
+        uploaded: object.uploaded.toISOString(),
+      };
+    }).sort((a, b) => b.uploaded.localeCompare(a.uploaded));
     return Response.json({ images });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Image storage is unavailable." }, { status: 503 });
@@ -85,8 +97,9 @@ export async function POST(request: Request) {
   const action = url.searchParams.get("action") || "start";
   try {
     if (action === "start") {
-      const body = (await request.json()) as { name?: string; size?: number; type?: string };
+      const body = (await request.json()) as { name?: string; displayText?: string; size?: number; type?: string };
       const filename = safeFilename(body.name ?? "");
+      const displayText = normalizeDisplayText(body.displayText, filename);
       const size = Number(body.size);
       const contentType = body.type ?? "";
       if (!size || size > MAX_FILE_SIZE) return Response.json({ error: "Images must be smaller than 10 MB." }, { status: 400 });
@@ -96,6 +109,7 @@ export async function POST(request: Request) {
         id,
         finalKey: `${PREFIX}${Date.now()}-${crypto.randomUUID()}-${filename}`,
         filename,
+        displayText,
         contentType,
         size,
         chunkSize: CHUNK_SIZE,
@@ -138,7 +152,7 @@ export async function POST(request: Request) {
       if (offset !== session.size) return Response.json({ error: "The uploaded image size did not match the original file." }, { status: 400 });
       await storage.put(session.finalKey, complete, {
         httpMetadata: { contentType: session.contentType },
-        customMetadata: { originalName: session.filename, uploadedBy: auth.admin.email },
+        customMetadata: { originalName: session.filename, displayText: session.displayText, uploadedBy: auth.admin.email },
       });
       await storage.delete([...temporaryKeys, sessionKey(session.id)]);
       return Response.json({ ok: true, key: session.finalKey, name: session.filename }, { status: 201 });
@@ -147,6 +161,25 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid upload action." }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "The upload could not be completed." }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  const auth = await requireAdminApi();
+  if (auth.error) return auth.error;
+  try {
+    const body = (await request.json()) as { key?: string; displayText?: string };
+    const key = body.key ?? "";
+    if (!key.startsWith(PREFIX)) return Response.json({ error: "Invalid image key." }, { status: 400 });
+    const bucket = getBucket();
+    const object = await bucket.head(key);
+    if (!object) return Response.json({ error: "Image not found." }, { status: 404 });
+    const filename = object.customMetadata?.originalName || key.slice(PREFIX.length);
+    const metadata = mergeAssetMetadata(object.customMetadata, body.displayText, filename);
+    await bucket.updateCustomMetadata(key, metadata);
+    return Response.json({ ok: true, displayText: metadata.displayText, filename });
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : "The display text could not be updated." }, { status: 500 });
   }
 }
 

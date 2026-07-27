@@ -95,13 +95,20 @@ nav a:hover { border-color: var(--terra); }
 .download-list small { color: var(--muted); text-align: right; }
 .uploaded-document { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
 .uploaded-document a { border-bottom: 0; }
+.asset-row-actions { padding-right: 4px; display: flex; gap: 7px; }
 .document-delete, .remove-button, .edit-button { padding: 7px 10px; border-radius: 5px; background: white; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
 .document-delete, .remove-button { border: 1px solid #c74343; color: #a52d2d; }
 .edit-button { border: 1px solid var(--sage); color: var(--sage); }
 .document-delete:hover, .remove-button:hover { background: #fff2f2; }
 .edit-button:hover { background: var(--pale); }
+.asset-edit-form { margin: 0 4px 12px; padding: 14px; display: grid; grid-column: 1 / -1; grid-template-columns: minmax(220px, 1fr) auto auto; align-items: end; gap: 12px; border: 1px solid #a9cce4; border-radius: 7px; background: #f8fcff; }
+.asset-edit-form label span, .asset-display-field span { margin-bottom: 5px; display: block; color: var(--sage); font-size: .66rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.asset-edit-form input, .asset-display-field input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #9dbbd0; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
+.asset-edit-form > small { padding-bottom: 10px; color: var(--muted); }
+.asset-edit-form > div { display: flex; gap: 7px; }
+.asset-edit-form .button { min-height: 34px; padding: 7px 11px; font-size: .72rem; }
 .visitor-note { margin: 0 23px 23px; padding: 14px 16px; border-radius: 6px; background: var(--pale); color: var(--muted); font-size: .78rem; }
-.upload-panel { margin: 0 23px 23px; padding: 20px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--pale); }
+.upload-panel { margin: 0 23px 23px; padding: 20px; display: grid; grid-template-columns: minmax(180px, .8fr) minmax(220px, 1fr) auto auto; align-items: end; gap: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--pale); }
 .upload-panel strong, .upload-panel small { display: block; }
 .upload-panel strong { color: var(--sage); font-family: var(--font-display); font-size: 1rem; }
 .upload-panel small { margin-top: 2px; color: var(--muted); font-size: .72rem; }
@@ -272,6 +279,10 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .study-content { gap: 85px; }
   .download-list a { align-items: flex-start; flex-direction: column; }
   .download-list small { text-align: left; }
+  .uploaded-document { align-items: start; }
+  .asset-row-actions { padding-top: 10px; }
+  .asset-edit-form { grid-template-columns: 1fr; }
+  .asset-edit-form > small { padding-bottom: 0; }
   .upload-panel { grid-template-columns: 1fr 1fr; }
   .upload-panel > div { grid-column: 1 / -1; }
   .add-user-form { grid-template-columns: 1fr; }
@@ -285,6 +296,8 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .schedule-grid { grid-template-columns: 1fr; }
   .upload-panel { grid-template-columns: 1fr; }
   .upload-panel > div, .upload-status { grid-column: auto; }
+  .uploaded-document { grid-template-columns: 1fr; }
+  .asset-row-actions { padding: 0 4px 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

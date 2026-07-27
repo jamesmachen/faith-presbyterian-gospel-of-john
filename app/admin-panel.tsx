@@ -277,7 +277,7 @@ export default function AdminPanel({ currentEmail, currentRole }: { currentEmail
         <div className="section-heading solo">
           <p className="eyebrow">Administrator tools</p>
           <h2>Manage the site</h2>
-          <p className="admin-intro">Update the study schedule, Bible resources, files, images, and administrators from this dedicated page.</p>
+          <p className="admin-intro">Update the study schedule, Bible resources, class materials, reference assets, and administrators from this dedicated page.</p>
         </div>
         <section className="admin-tool-card" id="passages" aria-labelledby="passages-admin-heading">
           <div className="admin-tool-heading">

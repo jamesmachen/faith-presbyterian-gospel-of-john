@@ -6,6 +6,8 @@ import { withBasePath } from "@/lib/base-path";
 type StoredDocument = {
   key: string;
   name: string;
+  filename: string;
+  displayText: string;
   size: number;
   uploaded: string;
 };
@@ -18,10 +20,12 @@ function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
-
 export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   const [documents, setDocuments] = useState<StoredDocument[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [displayText, setDisplayText] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingDisplayText, setEditingDisplayText] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,11 +33,11 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   const loadDocuments = useCallback(async () => {
     try {
       const response = await fetch(withBasePath("/api/documents"), { cache: "no-store" });
-      if (!response.ok) throw new Error("Could not load uploaded documents.");
+      if (!response.ok) throw new Error("Could not load class materials.");
       const data = (await response.json()) as { documents: StoredDocument[] };
       setDocuments(data.documents);
     } catch {
-      setStatus("Uploaded documents are temporarily unavailable.");
+      setStatus("Class materials are temporarily unavailable.");
     }
   }, []);
 
@@ -44,32 +48,30 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setSelectedFile(file);
+    setDisplayText(file?.name ?? "");
     setStatus(file ? `${file.name} is ready to upload.` : "");
   }
 
   async function uploadDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedFile) {
-      setStatus("Choose a document first.");
-      return;
-    }
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      setStatus("Please choose a document smaller than 15 MB.");
-      return;
-    }
+    if (!selectedFile) return setStatus("Choose a class material file first.");
+    if (!displayText.trim()) return setStatus("Display text is required.");
+    if (selectedFile.size > MAX_FILE_SIZE) return setStatus("Please choose a file smaller than 15 MB.");
 
     setIsUploading(true);
     setStatus(`Uploading ${selectedFile.name}…`);
     const formData = new FormData();
     formData.set("file", selectedFile);
+    formData.set("displayText", displayText);
 
     try {
       const response = await fetch(withBasePath("/api/documents"), { method: "POST", body: formData });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Upload failed.");
       setSelectedFile(null);
+      setDisplayText("");
       if (inputRef.current) inputRef.current.value = "";
-      setStatus("Document uploaded successfully.");
+      setStatus("Class material uploaded successfully.");
       await loadDocuments();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Upload failed. Please try again.");
@@ -78,14 +80,35 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
+  async function updateDisplayText(document: StoredDocument) {
+    const nextDisplayText = editingDisplayText.trim();
+    if (!nextDisplayText) return setStatus("Display text is required.");
+    setStatus(`Updating ${document.filename}…`);
+    try {
+      const response = await fetch(withBasePath("/api/documents"), {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: document.key, displayText: nextDisplayText }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "Update failed.");
+      setEditingKey(null);
+      setEditingDisplayText("");
+      setStatus("Class material display text updated.");
+      await loadDocuments();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Update failed. Please try again.");
+    }
+  }
+
   async function deleteDocument(document: StoredDocument) {
-    if (!window.confirm(`Delete ${document.name}? This cannot be undone.`)) return;
-    setStatus(`Deleting ${document.name}…`);
+    if (!window.confirm(`Delete ${document.filename}? This cannot be undone.`)) return;
+    setStatus(`Deleting ${document.filename}…`);
     try {
       const response = await fetch(withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`), { method: "DELETE" });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || "Delete failed.");
-      setStatus("Document deleted.");
+      setStatus("Class material deleted.");
       await loadDocuments();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Delete failed. Please try again.");
@@ -99,27 +122,30 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
         <li><a href={withBasePath("/resources/class-schedule.md")} download><span>Weeks 10–21 Schedule</span><small>Markdown document · 2 KB</small></a></li>
         {documents.map((document) => (
           <li key={document.key} className="uploaded-document">
-            <a href={withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`)} download={document.name}>
-              <span>{document.name}</span>
-              <small>Uploaded document · {formatSize(document.size)}</small>
+            <a href={withBasePath(`/api/documents?key=${encodeURIComponent(document.key)}`)} download={document.filename}>
+              <span>{document.displayText}</span>
+              <small>{isAdmin ? `Filename: ${document.filename} · ` : ""}Uploaded class material · {formatSize(document.size)}</small>
             </a>
-            {isAdmin && <button type="button" className="document-delete" onClick={() => void deleteDocument(document)} aria-label={`Delete ${document.name}`}>Delete</button>}
+            {isAdmin && <div className="asset-row-actions">
+              <button type="button" className="edit-button" onClick={() => { setEditingKey(document.key); setEditingDisplayText(document.displayText); }}>Edit text</button>
+              <button type="button" className="document-delete" onClick={() => void deleteDocument(document)} aria-label={`Delete ${document.filename}`}>Delete</button>
+            </div>}
+            {isAdmin && editingKey === document.key && <form className="asset-edit-form" onSubmit={(event) => { event.preventDefault(); void updateDisplayText(document); }}>
+              <label><span>Display text</span><input value={editingDisplayText} onChange={(event) => setEditingDisplayText(event.target.value)} maxLength={160} required /></label>
+              <small>Filename: {document.filename}</small>
+              <div><button type="button" className="edit-button" onClick={() => setEditingKey(null)}>Cancel</button><button type="submit" className="button button-primary">Save</button></div>
+            </form>}
           </li>
         ))}
       </ul>
       {isAdmin && <form className="upload-panel" onSubmit={uploadDocument}>
-        <div>
-          <strong>Add a class document</strong>
-          <small>PDF, Word, text, presentation, or spreadsheet · up to 15 MB</small>
-        </div>
-        <label className="file-picker">
-          <span>{selectedFile ? "Choose another" : "Choose file"}</span>
-          <input ref={inputRef} type="file" name="file" accept={ACCEPTED_EXTENSIONS} onChange={chooseFile} />
-        </label>
-        <button type="submit" disabled={!selectedFile || isUploading}>{isUploading ? "Uploading…" : "Upload"}</button>
+        <div><strong>Add class material</strong><small>PDF, Word, text, presentation, or spreadsheet · up to 15 MB</small></div>
+        <label className="asset-display-field"><span>Display text</span><input type="text" value={displayText} onChange={(event) => setDisplayText(event.target.value)} maxLength={160} placeholder="Text shown in the Class Materials list" required /></label>
+        <label className="file-picker"><span>{selectedFile ? "Choose another" : "Choose file"}</span><input ref={inputRef} type="file" name="file" accept={ACCEPTED_EXTENSIONS} onChange={chooseFile} /></label>
+        <button type="submit" disabled={!selectedFile || !displayText.trim() || isUploading}>{isUploading ? "Uploading…" : "Upload"}</button>
         <p className="upload-status" role="status" aria-live="polite">{status}</p>
       </form>}
-      {!isAdmin && <p className="visitor-note">You have visitor access. Administrators manage uploaded documents.</p>}
+      {!isAdmin && <p className="visitor-note">Class materials are available to everyone. Administrators manage uploads.</p>}
     </div>
   );
 }

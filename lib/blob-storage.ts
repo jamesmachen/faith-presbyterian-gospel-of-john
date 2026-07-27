@@ -64,6 +64,15 @@ async function deleteKeys(keys: string[]) {
   if (urls.length) await del(urls, { token: token() });
 }
 
+async function writeMetadata(key: string, metadata: ObjectMetadata) {
+  await put(`${key}${METADATA_SUFFIX}`, JSON.stringify(metadata), {
+    access: "public",
+    addRandomSuffix: false,
+    contentType: "application/json",
+    token: token(),
+  });
+}
+
 async function toStoredObject(blob: ListedBlob) {
   const response = await fetch(blob.url);
   if (!response.ok) return null;
@@ -121,12 +130,7 @@ export function getStorage() {
       });
 
       if (options.customMetadata) {
-        await put(`${key}${METADATA_SUFFIX}`, JSON.stringify(options.customMetadata), {
-          access: "public",
-          addRandomSuffix: false,
-          contentType: "application/json",
-          token: token(),
-        });
+        await writeMetadata(key, options.customMetadata);
       }
 
       return blob;
@@ -145,6 +149,15 @@ export function getStorage() {
         })),
       );
       return { objects };
+    },
+
+    async updateCustomMetadata(key: string, metadata: ObjectMetadata) {
+      const blob = await findBlob(key);
+      if (!blob) return null;
+      const existing = await readMetadata(key);
+      const merged = { ...existing, ...metadata };
+      await writeMetadata(key, merged);
+      return merged;
     },
 
     async delete(keys: string | string[]) {
