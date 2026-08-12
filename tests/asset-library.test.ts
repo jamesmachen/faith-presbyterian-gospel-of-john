@@ -96,6 +96,9 @@ test("uploaded resources use lazy public viewers without admin controls", async 
   assert.match(docx, /renderAsync/);
   assert.match(documents, /<ResourceViewer/);
   assert.match(images, /<ResourceViewer/);
+  assert.match(documents, /class-study-guide-john\.docx/);
+  assert.match(documents, /setIsViewingStudyGuide\(true\)/);
+  assert.doesNotMatch(documents, /gospel-of-john-study-guide\.md|class-schedule\.md|Weeks 10/);
   assert.match(documents, /import \{ upload \} from "@vercel\/blob\/client"/);
   assert.match(documents, /multipart:\s*true/);
   assert.match(documents, /onUploadProgress/);

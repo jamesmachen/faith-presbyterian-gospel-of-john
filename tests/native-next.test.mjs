@@ -37,9 +37,11 @@ test("configures the canonical base path and unprefixed legacy redirect", async 
   ]);
 
   assert.match(nextConfig, /basePath:\s*["']\/sunday-school["']/);
+  assert.match(nextConfig, /source:\s*["']\/["'][\s\S]*destination:\s*["']\/john["']/);
   assert.match(nextConfig, /source:\s*["']\/sundayschool["']/);
-  assert.match(nextConfig, /destination:\s*["']\/sunday-school["']/);
+  assert.match(nextConfig, /destination:\s*["']\/sunday-school\/john["']/);
   assert.match(nextConfig, /permanent:\s*true/);
   assert.match(nextConfig, /basePath:\s*false/);
   assert.match(basePathHelper, /BASE_PATH\s*=\s*["']\/sunday-school["']/);
+  assert.match(basePathHelper, /HOME_PATH\s*=\s*["']\/john["']/);
 });

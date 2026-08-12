@@ -1,4 +1,5 @@
 export const BASE_PATH = "/sunday-school";
+export const HOME_PATH = "/john";
 
 export function withBasePath(path: string) {
   if (!path.startsWith("/")) return path;

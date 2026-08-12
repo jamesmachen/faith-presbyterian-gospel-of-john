@@ -2,7 +2,7 @@ import DocumentStore from "./document-store";
 import ImageStore from "./image-store";
 import TranslationStore from "./translation-store";
 import { listStudyPassages } from "@/db/site-config";
-import { withBasePath } from "@/lib/base-path";
+import { HOME_PATH, withBasePath } from "@/lib/base-path";
 import { DEFAULT_STUDY_PASSAGES } from "./site-config";
 import { getAuthenticatedAdmin } from "@/lib/admin-auth";
 import { signOut } from "@/auth";
@@ -36,7 +36,7 @@ export default async function Home() {
             {isAdmin && <a href={withBasePath("/admin")}>ADMIN</a>}
           </nav>
           <div className="account-menu">
-            {admin ? <><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath("/") }); }}><button type="submit">Sign out</button></form></> : <a href={withBasePath("/admin/signin")}>Admin sign in</a>}
+            {admin ? <><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath(HOME_PATH) }); }}><button type="submit">Sign out</button></form></> : <a href={withBasePath("/admin/signin")}>Admin sign in</a>}
           </div>
         </div>
       </header>

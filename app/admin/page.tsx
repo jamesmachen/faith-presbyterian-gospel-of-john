@@ -1,7 +1,7 @@
 import AdminPanel from "../admin-panel";
 import DocumentStore from "../document-store";
 import ImageStore from "../image-store";
-import { withBasePath } from "@/lib/base-path";
+import { HOME_PATH, withBasePath } from "@/lib/base-path";
 import { requireAdminPage } from "@/lib/admin-auth";
 import { signOut } from "@/auth";
 
@@ -18,7 +18,7 @@ export default async function AdminPage() {
           <p className="eyebrow">Administrator access</p>
           <h1>This account is not an administrator.</h1>
           <p>You are signed in as <strong>{authenticatedEmail}</strong>, but this address is not authorized.</p>
-          <a className="button button-primary" href={withBasePath("/")}>Return to the class site</a>
+          <a className="button button-primary" href={withBasePath(HOME_PATH)}>Return to the class site</a>
         </section>
       </main>
     );
@@ -27,13 +27,13 @@ export default async function AdminPage() {
   return (
     <main className="admin-page">
       <header className="site-header">
-        <a className="brand" href={withBasePath("/")} aria-label="Faith Presbyterian Church Sunday School home">
+        <a className="brand" href={withBasePath(HOME_PATH)} aria-label="Faith Presbyterian Church Sunday School home">
           <img className="brand-logo" src={withBasePath("/fpc-logo.png")} alt="Faith Presbyterian Church" />
           <small>Sunday School</small>
         </a>
         <div className="header-tools">
-          <nav aria-label="Administrator navigation"><a href={withBasePath("/")}>Class site</a><a href="#passages">Passages</a><a href="#resources">Files</a></nav>
-          <div className="account-menu"><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath("/") }); }}><button type="submit">Sign out</button></form></div>
+          <nav aria-label="Administrator navigation"><a href={withBasePath(HOME_PATH)}>Class site</a><a href="#passages">Passages</a><a href="#resources">Files</a></nav>
+          <div className="account-menu"><span>{admin.displayName || admin.email}</span><form action={async () => { "use server"; await signOut({ redirectTo: withBasePath(HOME_PATH) }); }}><button type="submit">Sign out</button></form></div>
         </div>
       </header>
 
@@ -67,7 +67,7 @@ export default async function AdminPage() {
 
       <footer>
         <div><strong>Faith Presbyterian Church</strong><span>Sunday School · Administration</span></div>
-        <a href={withBasePath("/")}>Return to class site →</a>
+        <a href={withBasePath(HOME_PATH)}>Return to class site →</a>
       </footer>
     </main>
   );

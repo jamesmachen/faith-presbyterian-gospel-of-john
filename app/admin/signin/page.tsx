@@ -1,5 +1,5 @@
 import { signIn } from "@/auth";
-import { withBasePath } from "@/lib/base-path";
+import { HOME_PATH, withBasePath } from "@/lib/base-path";
 import { isSuccessfulEmailSignInResult } from "@/lib/auth-routing";
 import { redirect } from "next/navigation";
 
@@ -47,7 +47,7 @@ export default async function AdminSignInPage({
           </button>
         </form>
         {error && <p className="admin-status">The sign-in link could not be sent. Please try again.</p>}
-        <a href={withBasePath("/")}>Return to the class site</a>
+        <a href={withBasePath(HOME_PATH)}>Return to the class site</a>
       </section>
     </main>
   );

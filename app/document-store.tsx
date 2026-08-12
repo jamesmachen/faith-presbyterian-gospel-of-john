@@ -27,6 +27,7 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingDisplayText, setEditingDisplayText] = useState("");
   const [viewingKey, setViewingKey] = useState<string | null>(null);
+  const [isViewingStudyGuide, setIsViewingStudyGuide] = useState(false);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -132,8 +133,12 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="document-store">
       <ul className="download-list">
-        <li><a href={withBasePath("/resources/gospel-of-john-study-guide.md")} download><span>Gospel of John Study Guide</span><small>Markdown document · 4 KB</small></a></li>
-        <li><a href={withBasePath("/resources/class-schedule.md")} download><span>Weeks 10–21 Schedule</span><small>Markdown document · 2 KB</small></a></li>
+        <li className="uploaded-document">
+          <button type="button" className="resource-view-trigger" onClick={() => setIsViewingStudyGuide(true)} aria-label="View Class Study Guide - John">
+            <span>Class Study Guide - John</span>
+            <small>Word document · 15.8 KB</small>
+          </button>
+        </li>
         {documents.map((document) => (
           <li key={document.key} className="uploaded-document">
             <button type="button" className="resource-view-trigger" onClick={() => setViewingKey(document.key)} aria-label={`View ${document.displayText}`}>
@@ -165,6 +170,14 @@ export default function DocumentStore({ isAdmin }: { isAdmin: boolean }) {
           url: withBasePath(`/api/documents?key=${encodeURIComponent(viewingDocument.key)}`),
         }}
         onClose={() => setViewingKey(null)}
+      />}
+      {isViewingStudyGuide && <ResourceViewer
+        resource={{
+          title: "Class Study Guide - John",
+          filename: "Class Study Guide - John.docx",
+          url: withBasePath("/resources/class-study-guide-john.docx"),
+        }}
+        onClose={() => setIsViewingStudyGuide(false)}
       />}
       {isAdmin && <form className="upload-panel" onSubmit={uploadDocument}>
         <div><strong>Add class material</strong><small>Any file type · large files upload directly and securely</small></div>

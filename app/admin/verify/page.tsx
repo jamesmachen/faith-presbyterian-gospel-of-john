@@ -1,4 +1,4 @@
-import { withBasePath } from "@/lib/base-path";
+import { HOME_PATH, withBasePath } from "@/lib/base-path";
 
 export default function VerifyRequestPage() {
   return (
@@ -8,7 +8,7 @@ export default function VerifyRequestPage() {
         <p className="eyebrow">Check your email</p>
         <h1>Your secure sign-in link is on its way.</h1>
         <p>If the address can receive email, a time-limited link will arrive shortly.</p>
-        <a className="button button-primary" href={withBasePath("/")}>Return to the class site</a>
+        <a className="button button-primary" href={withBasePath(HOME_PATH)}>Return to the class site</a>
       </section>
     </main>
   );
