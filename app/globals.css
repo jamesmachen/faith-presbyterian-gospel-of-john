@@ -276,6 +276,29 @@ footer strong { font-family: var(--font-display); font-weight: 400; }
 footer span { color: #b9def4; font-size: .72rem; }
 footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
 
+.landing-page { min-height: 100vh; background: linear-gradient(180deg, var(--warm) 0, #f7fbfe 58%, var(--warm) 100%); }
+.landing-hero { width: min(1280px, calc(100% - 48px)); min-height: 690px; margin: 0 auto; padding: 100px 0 90px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr); align-items: center; gap: 76px; }
+.landing-hero h1 { margin-bottom: 25px; color: var(--sage); font-size: clamp(3.5rem, 7vw, 6.5rem); line-height: .92; }
+.landing-hero-copy .button { margin-top: 22px; }
+.landing-scripture { min-height: 430px; }
+.landing-scripture p { font-size: clamp(1.65rem, 2.8vw, 2.55rem); }
+.landing-classes { padding: 105px 0 130px; }
+.landing-section-heading { max-width: 760px; margin-bottom: 48px; }
+.landing-section-heading h2 { margin-bottom: 18px; color: var(--sage); font-size: clamp(2.5rem, 4.5vw, 4rem); line-height: 1; }
+.landing-section-heading > p:last-child { color: var(--muted); font-size: 1.05rem; }
+.class-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.class-card { min-height: 520px; display: grid; grid-template-columns: minmax(280px, .9fr) minmax(320px, 1.1fr); overflow: hidden; grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: 0 22px 55px rgba(11,77,162,.1); transition: transform .2s ease, box-shadow .2s ease; }
+.class-card:hover { transform: translateY(-4px); box-shadow: 0 28px 64px rgba(11,77,162,.15); }
+.class-card-image { min-height: 100%; overflow: hidden; background: var(--pale); }
+.class-card-image img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.class-card-copy { padding: clamp(38px, 6vw, 72px); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.class-card-copy h3 { margin: 0; color: var(--sage); font-family: var(--font-display); font-size: clamp(2.5rem, 4.2vw, 4.2rem); font-weight: 600; line-height: .98; letter-spacing: -.04em; }
+.class-tagline { margin: 12px 0 24px; color: var(--terra); font-family: Cambria, Georgia, serif; font-size: clamp(1.45rem, 2.5vw, 2rem); font-style: italic; }
+.class-card-copy > p:not(.eyebrow):not(.class-tagline) { max-width: 570px; color: var(--muted); font-size: 1.02rem; }
+.class-card-copy small { margin-top: 8px; color: var(--sage-2); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.class-card-action { margin-top: 28px; gap: 14px; }
+.landing-footer p { max-width: 560px; margin: 0; color: #b9def4; font-family: Cambria, Georgia, serif; font-size: .9rem; text-align: right; }
+
 @media (max-width: 980px) {
   .brand-logo { width: 226px; }
   .brand small { font-size: .85rem; }
@@ -289,6 +312,9 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .account-menu span { display: none; }
   .add-user-form { grid-template-columns: 1fr 1fr; }
   .add-user-form button { grid-column: 1 / -1; }
+  .landing-hero { grid-template-columns: 1fr; gap: 50px; }
+  .class-card { grid-template-columns: 1fr; }
+  .class-card-image { min-height: 360px; max-height: 480px; }
 }
 @media (max-width: 700px) {
   .section-shell, .hero { width: min(100% - 32px, 1180px); }
@@ -333,6 +359,13 @@ footer a { color: #a9dcf8; font-size: .82rem; font-weight: 700; }
   .add-user-form { grid-template-columns: 1fr; }
   .add-user-form button { grid-column: auto; }
   footer { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .landing-hero { width: min(100% - 32px, 1180px); min-height: 0; padding: 78px 0 70px; }
+  .landing-hero h1 { font-size: clamp(3rem, 15vw, 5rem); }
+  .landing-classes { padding: 78px 0 90px; }
+  .class-card { min-height: 0; }
+  .class-card-image { min-height: 280px; }
+  .class-card-copy { padding: 34px 26px 40px; }
+  .landing-footer p { text-align: left; }
 }
 @media (max-width: 430px) {
   .brand-logo { width: 138px; }

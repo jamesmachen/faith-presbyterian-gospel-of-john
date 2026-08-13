@@ -5,7 +5,6 @@ import {
   ownerAdminEmail,
   type SiteUser,
 } from "@/db/access";
-import { withBasePath } from "@/lib/base-path";
 import { redirect } from "next/navigation";
 import { resolveAdminRole } from "@/lib/admin-policy";
 
@@ -45,7 +44,7 @@ export async function getAuthenticatedAdmin(): Promise<AuthenticatedAdmin | null
 export async function requireAdminPage() {
   const session = await auth();
   if (!session?.user?.email) {
-    redirect(withBasePath("/admin/signin"));
+    redirect("/admin/signin");
   }
   return {
     admin: await getAuthenticatedAdmin(),

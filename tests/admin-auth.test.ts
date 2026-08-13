@@ -53,10 +53,11 @@ test("all administrator mutation routes use validated server sessions", async ()
 });
 
 test("Auth.js uses internal paths while Next.js owns the Sunday School base path", async () => {
-  const [authSource, routeSource, signInSource] = await Promise.all([
+  const [authSource, routeSource, signInSource, adminAuthSource] = await Promise.all([
     readFile(new URL("../auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/auth/[...nextauth]/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/signin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/admin-auth.ts", import.meta.url), "utf8"),
   ]);
   assert.match(authSource, /basePath:\s*AUTH_INTERNAL_BASE_PATH/);
   assert.match(authSource, /signIn:\s*["']\/admin\/signin["']/);
@@ -69,4 +70,6 @@ test("Auth.js uses internal paths while Next.js owns the Sunday School base path
   assert.doesNotMatch(signInSource, /withBasePath\(["']\/admin\/signin["']\)/);
   assert.match(signInSource, /catch\s*\{/);
   assert.match(signInSource, /error=EmailSignin/);
+  assert.match(adminAuthSource, /redirect\(["']\/admin\/signin["']\)/);
+  assert.doesNotMatch(adminAuthSource, /withBasePath/);
 });

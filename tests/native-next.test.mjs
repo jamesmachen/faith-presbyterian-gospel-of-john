@@ -30,18 +30,34 @@ test("creates native Next.js output", async () => {
   await access(new URL(".next/BUILD_ID", root));
 });
 
-test("configures the canonical base path and unprefixed legacy redirect", async () => {
+test("configures the Sunday School base path and landing-page legacy redirect", async () => {
   const [nextConfig, basePathHelper] = await Promise.all([
     readFile(new URL("next.config.ts", root), "utf8"),
     readFile(new URL("lib/base-path.ts", root), "utf8"),
   ]);
 
   assert.match(nextConfig, /basePath:\s*["']\/sunday-school["']/);
-  assert.match(nextConfig, /source:\s*["']\/["'][\s\S]*destination:\s*["']\/john["']/);
   assert.match(nextConfig, /source:\s*["']\/sundayschool["']/);
-  assert.match(nextConfig, /destination:\s*["']\/sunday-school\/john["']/);
+  assert.match(nextConfig, /destination:\s*["']\/sunday-school["']/);
   assert.match(nextConfig, /permanent:\s*true/);
   assert.match(nextConfig, /basePath:\s*false/);
   assert.match(basePathHelper, /BASE_PATH\s*=\s*["']\/sunday-school["']/);
   assert.match(basePathHelper, /HOME_PATH\s*=\s*["']\/john["']/);
+});
+
+test("keeps the landing page and John class as separate routes", async () => {
+  const [landing, johnRoute, johnClass] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/john/page.tsx", root), "utf8"),
+    readFile(new URL("app/john-class-page.tsx", root), "utf8"),
+  ]);
+  assert.match(landing, /Sunday School Classes/);
+  assert.match(landing, /href=\{`\/\$\{classItem\.slug\}`\}/);
+  assert.doesNotMatch(landing, /<Link[^>]+href=\{withBasePath/);
+  assert.match(johnRoute, /JohnClassPage/);
+  assert.match(johnRoute, /canonical:\s*withBasePath\(["']\/john["']\)/);
+  assert.match(johnClass, /href=\{withBasePath\(["']\/["']\)\}/);
+  assert.match(johnClass, /id="resources"/);
+  assert.match(johnClass, /id="schedule"/);
+  assert.match(johnClass, /id="study"/);
 });

@@ -30,7 +30,7 @@ test("display-text updates preserve all existing asset metadata", () => {
 
 test("resource areas use the requested names and default to open", async () => {
   const [home, admin] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/john-class-page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(home, /<strong>Class Materials<\/strong>/);

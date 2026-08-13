@@ -5,13 +5,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/john",
-        permanent: true,
-      },
-      {
         source: "/sundayschool",
-        destination: "/sunday-school/john",
+        destination: "/sunday-school",
         permanent: true,
         basePath: false,
       },

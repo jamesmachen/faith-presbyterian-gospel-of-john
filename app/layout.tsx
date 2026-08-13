@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { HOME_PATH, withBasePath } from "@/lib/base-path";
+import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,18 +11,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase,
-    title: "Faith-Presbyterian-Gospel-of-John",
-    description: "Study resources, weekly passages, reflection questions, and a class outline for exploring the Gospel of John.",
-    alternates: { canonical: withBasePath(HOME_PATH) },
+    title: "Sunday School | Faith Presbyterian Church",
+    description: "Sunday School classes, Bible studies, schedules, study materials, and resources from Faith Presbyterian Church.",
     icons: { icon: withBasePath("/icon.png") },
     openGraph: {
-      title: "The Gospel of John — Come and See",
-      description: "Resources for a Faith Presbyterian Church Sunday School study of the Gospel of John.",
+      title: "Faith Presbyterian Church Sunday School",
+      description: "Bible study, class resources, schedules, and materials from Faith Presbyterian Church Sunday School.",
       type: "website",
-      url: withBasePath(HOME_PATH),
+      url: withBasePath("/"),
       images: [{ url: withBasePath("/og.png"), width: 1536, height: 1024, alt: "Faith Presbyterian Church — The Gospel of John — Come and See" }],
     },
-    twitter: { card: "summary_large_image", title: "The Gospel of John — Come and See", description: "Faith Presbyterian Church Sunday School resources", images: [withBasePath("/og.png")] },
+    twitter: { card: "summary_large_image", title: "Faith Presbyterian Church Sunday School", description: "Bible study, class resources, schedules, and materials from Faith Presbyterian Church Sunday School.", images: [withBasePath("/og.png")] },
   };
 }
 
